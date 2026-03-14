@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
-class StrategyNode(BaseModel):
+
+class Node(BaseModel):
     id: str | None = None
     strategy_id: str | None = None
     label: str
