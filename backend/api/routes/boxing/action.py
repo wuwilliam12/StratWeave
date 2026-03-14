@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from typing import List
-from api.models.boxing.action import BoxerAction
 
-router = APIRouter()
+from .models import BoxerAction
+
+router = APIRouter(prefix="/actions", tags=["actions"])
 moves_db: List[BoxerAction] = []
 
 @router.get("/")

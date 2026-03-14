@@ -2,8 +2,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 from api.models.boxing.enums import FootworkState
 
-# ActionFrame/State for Boxing
-class BoxingFrame(BaseModel):
+# ActionState for Boxing
+class BoxingState(BaseModel):
     # What boxer state a move is executed from
     lead_hand: str | None
     rear_hand: str | None
@@ -17,6 +17,7 @@ class BoxingFrame(BaseModel):
     stance_angle: float = 45.0 # degrees relative to opponent (how bladed/squared up stance is)
     weight_distribution: float = 0.55 # relative to front foot (how heavy on front foot)
     stance_width: float = 0 # how wide stance is (narrow to extremely wide)
+    stance_height: float = 0 # how long relative to height
     distance: Optional[str] = None
 
     # Potential stored in current stance

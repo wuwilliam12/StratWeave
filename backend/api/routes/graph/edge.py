@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 from typing import List
-from api.models.boxing.edge import BoxingEdge
 from uuid import uuid4
 
-router = APIRouter()
+from api.models.boxing.edge import BoxingEdge
+
+router = APIRouter(prefix="/edges", tags=["edges"])
 edges_db: List[BoxingEdge] = []
 
 @router.post("/")
@@ -14,4 +15,4 @@ def create_edge(edge: BoxingEdge):
 
 @router.get("/")
 def get_edges():
-    return edge_db
+    return edges_db

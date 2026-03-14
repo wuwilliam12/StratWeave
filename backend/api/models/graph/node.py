@@ -1,0 +1,14 @@
+from pydantic import BaseModel
+
+class StrategyNode(BaseModel):
+    id: str | None = None
+    strategy_id: str | None = None
+    label: str
+
+    action_id: str | None = None
+    boxer_id: str | None = None
+
+    position_x: float = 0
+    position_y: float = 0
+
+    node_type: str

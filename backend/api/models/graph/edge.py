@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-class BoxingEdge(BaseModel):
+class Edge(BaseModel):
     id: str | None = None
-    source_frame_id: str
-    target_frame_id: str
+    source_state_id: str | None = None
+    target_state_id: str | None = None
 
     move_id: str
 
