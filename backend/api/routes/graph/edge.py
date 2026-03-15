@@ -1,32 +1,69 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from typing import List
 from uuid import uuid4
+from sqlalchemy.orm import Session
 
-from .models import Edge
+from api.models import Edge
+from db import get_db
+from db.models import EdgeModel
+
+
+def _to_pydantic(m: EdgeModel) -> Edge:
+    return Edge(
+        id=m.id,
+        source=m.source,
+        target=m.target,
+        label=m.label or "",
+        probability=m.probability,
+        stamina_cost=m.stamina_cost,
+    )
+
 
 router = APIRouter(prefix="/edges", tags=["edges"])
-edges_db: List[Edge] = []
+
+
+@router.get("/",
+    response_model=List[Edge],
+    summary="Get all edges in the graph",
+)
+def get_edges(db: Session = Depends(get_db)):
+    """
+    Get all edges in the graph from the database.
+    """
+    return [_to_pydantic(e) for e in db.query(EdgeModel).all()]
+
+
 @router.post("/",
     response_model=Edge,
     summary="Create a new edge in the graph",
 )
-def create_edge(edge: Edge):
+def create_edge(edge: Edge, db: Session = Depends(get_db)):
     """
     Create a new edge in the graph.
     """
-    if edge.id is None:
-        edge.id = str(uuid4())
-    edges_db.append(edge)
-    return edge
+    eid = edge.id if (edge.id and edge.id != "") else str(uuid4())
+    m = EdgeModel(
+        id=eid,
+        source=edge.source,
+        target=edge.target,
+        label=edge.label or "",
+        probability=edge.probability,
+        stamina_cost=edge.stamina_cost,
+    )
+    db.add(m)
+    db.commit()
+    db.refresh(m)
+    return _to_pydantic(m)
 
 
 @router.delete("/",
     response_model=dict,
     summary="Clear all edges in the graph",
 )
-def clear_edges():
+def clear_edges(db: Session = Depends(get_db)):
     """
     Clear all edges in the graph.
     """
-    edges_db.clear()
+    db.query(EdgeModel).delete()
+    db.commit()
     return {"ok": True}

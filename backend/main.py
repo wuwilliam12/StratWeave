@@ -1,9 +1,18 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import api_router
+from db import create_tables, get_db
 
-app = FastAPI(title = "StratWeave Backend")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_tables()
+    yield
+
+
+app = FastAPI(title="StratWeave Backend", lifespan=lifespan)
 
 # CORS for front vs backend port access
 ALLOWED_ORIGINS = [
