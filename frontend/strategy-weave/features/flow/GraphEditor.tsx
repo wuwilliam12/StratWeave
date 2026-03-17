@@ -282,6 +282,7 @@ export default function GraphEditor() {
 
   const toolbarStatus = error ?? (dirty ? "Unsaved" : "Saved");
 
+  {/* Show loading indicator */}
   if (loading) {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center text-gray-500">
@@ -292,6 +293,7 @@ export default function GraphEditor() {
 
   return (
     <div className="flex h-full w-full flex-col">
+      {/* ToolBar */}
       <Toolbar
         onAddNode={() => handleAddNode()}
         onDeleteSelected={handleDeleteSelected}
@@ -305,7 +307,9 @@ export default function GraphEditor() {
         }
       />
 
+      {/* Main body section */}
       <div className="flex flex-1 min-h-0">
+        {/* Left column - Palette/Explorer*/}
         <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 dark:border-gray-700">
           <Palette onSelect={handleAddNodeFromPalette} />
           <div className="flex-1 overflow-hidden">
@@ -320,6 +324,7 @@ export default function GraphEditor() {
           </div>
         </aside>
 
+        {/* Right column - Flow/Graph area */}
         <main className="relative flex-1">
           <ReactFlow
             nodes={nodes}
