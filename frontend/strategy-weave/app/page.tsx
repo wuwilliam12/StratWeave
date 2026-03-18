@@ -1,10 +1,8 @@
-import GraphPage from "../features/flow/GraphEditor";
+import GraphEditorPage from "./graph_editor/GraphEditorPage";
 
 export default function Home() {
   return (
-    <div>
-      {/* Remove later; testing right now */}
-      <GraphPage/>
-    </div>
+    /* Testing - remove and replace later */
+    <GraphEditorPage />
   );
 }
