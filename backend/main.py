@@ -12,6 +12,10 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# Register sport resolvers after routes are loaded (avoids circular import)
+import api.models.sports.boxing_resolver  # noqa: F401, E402
+
+
 app = FastAPI(title="StratWeave Backend", lifespan=lifespan)
 
 # CORS for front vs backend port access

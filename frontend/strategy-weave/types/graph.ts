@@ -10,8 +10,12 @@ export interface GraphNode {
   position_y: number;
   node_type?: string;
   strategy_id?: string | null;
+  sport?: string | null;
   action_id?: string | null;
   boxer_id?: string | null;
+  /** Resolved when fetchGraph({ enrich: true }) */
+  action?: Record<string, unknown> | null;
+  boxer?: Record<string, unknown> | null;
 }
 
 /* Graph edge interface */

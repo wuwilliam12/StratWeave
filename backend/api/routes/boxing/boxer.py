@@ -15,7 +15,8 @@ def create_boxer(boxer: Boxer):
     """
     Create a new boxer.
     """
-    boxer.id = str(uuid4())
+    if not boxer.id:
+        boxer.id = str(uuid4())
     boxers_db.append(boxer)
     return boxer
 

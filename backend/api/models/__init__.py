@@ -1,2 +1,2 @@
-from .boxing import Boxer, BoxingFrame, BoxerAction
+from .boxing import Boxer, BoxerAction
 from .graph import Edge, Node

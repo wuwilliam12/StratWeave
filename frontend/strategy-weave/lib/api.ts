@@ -1,5 +1,5 @@
 /**
- * API client for StratWeave backend (graph nodes/edges).
+ * API client for StratWeave backend (graph nodes/edges, sport models).
  */
 
 import type { GraphPayload } from "@/types/graph";
@@ -26,8 +26,18 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 /* Graph API calls */
-export async function fetchGraph(): Promise<GraphPayload> {
-  return fetchApi<GraphPayload>("/graph/");
+export interface FetchGraphOptions {
+  enrich?: boolean;
+}
+
+export async function fetchGraph(
+  options?: FetchGraphOptions
+): Promise<GraphPayload> {
+  const params = new URLSearchParams();
+  if (options?.enrich) params.set("enrich", "true");
+  const qs = params.toString();
+  const path = qs ? `/graph/?${qs}` : "/graph/";
+  return fetchApi<GraphPayload>(path);
 }
 
 export async function saveGraph(payload: GraphPayload): Promise<GraphPayload> {
@@ -35,4 +45,34 @@ export async function saveGraph(payload: GraphPayload): Promise<GraphPayload> {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+/* Boxing API calls */
+export interface Boxer {
+  id?: string | null;
+  speed?: number;
+  power?: number;
+  reach?: number;
+  height?: number;
+  reaction_time?: number;
+  style?: string | null;
+}
+
+export interface BoxerAction {
+  id?: string | null;
+  name: string;
+  lead_hand?: string | null;
+  rear_hand?: string | null;
+  footwork?: string | null;
+  head_movement?: string | null;
+  stamina_cost?: number;
+  base_time?: number;
+}
+
+export async function fetchBoxers(): Promise<Boxer[]> {
+  return fetchApi<Boxer[]>("/boxing/boxers/");
+}
+
+export async function fetchActions(): Promise<BoxerAction[]> {
+  return fetchApi<BoxerAction[]>("/boxing/actions/");
 }

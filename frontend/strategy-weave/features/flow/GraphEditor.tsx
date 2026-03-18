@@ -210,7 +210,13 @@ export default function GraphEditor() {
         {
           id: nextNodeId(),
           position: { x: 150 + nds.length * 30, y: 150 },
-          data: { label: item.label, nodeType: item.nodeType },
+          data: {
+            label: item.label,
+            nodeType: item.nodeType,
+            sport: item.sport ?? null,
+            action_id: item.action_id ?? null,
+            boxer_id: item.boxer_id ?? null,
+          },
         },
       ]);
       markDirty();

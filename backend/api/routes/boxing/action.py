@@ -1,10 +1,17 @@
 from fastapi import APIRouter
 from typing import List
+from uuid import uuid4
 
 from .models import BoxerAction
 
 router = APIRouter(prefix="/actions", tags=["actions"])
-actions_db: List[BoxerAction] = []
+
+# Seeded/default actions
+actions_db: List[BoxerAction] = [
+    BoxerAction(id="seed-jab", name="Jab", lead_hand="left"),
+    BoxerAction(id="seed-cross", name="Cross", rear_hand="right"),
+    BoxerAction(id="seed-hook", name="Left hook", lead_hand="left"),
+]
 
 @router.post("/",
     response_model=BoxerAction,
@@ -14,7 +21,8 @@ def create_action(action: BoxerAction):
     """
     Create a new action.
     """
-    action.id = str(uuid4())
+    if not action.id:
+        action.id = str(uuid4())
     actions_db.append(action)
     return action
 

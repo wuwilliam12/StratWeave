@@ -9,10 +9,14 @@ import type { GraphNode, GraphEdge } from "@/types/graph";
  * Shape of `node.data` used in the editor.
  * - `label` is the main text shown on the node (name/short description)
  * - `details` is for a future dropdown / expandable details panel
+ * - `action_id` / `boxer_id` link to sport entities (boxing actions, boxers)
  */
 export interface FlowNodeData {
   label: string;
   details?: string;
+  sport?: string | null;
+  action_id?: string | null;
+  boxer_id?: string | null;
 }
 
 /* Convert API nodes to React Flow nodes */
@@ -20,9 +24,12 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
   return apiNodes.map((n) => ({
     id: n.id ?? `node-${Math.random().toString(36).slice(2, 9)}`,
     position: { x: n.position_x, y: n.position_y },
-    // For now the backend only knows about a single `label` field.
-    // The UI treats this as the main name/description text for the node.
-    data: { label: n.label } as FlowNodeData,
+    data: {
+      label: n.label,
+      sport: n.sport ?? null,
+      action_id: n.action_id ?? null,
+      boxer_id: n.boxer_id ?? null,
+    } as FlowNodeData,
   }));
 }
 
@@ -50,7 +57,7 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
     const data = (n.data ?? {}) as Partial<FlowNodeData>;
 
     return {
-      id: n.id,
+      id: n.id ?? null,
       // Persist the main visible text; details stay frontend‑only for now.
       label: data.label ?? "",
       position_x: n.position?.x ?? 0,
@@ -58,6 +65,9 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
       // TODO: once you introduce different node “kinds” (e.g. strategy vs
       // detail vs edge‑label mini node), set `node_type` from data here.
       node_type: "strategy",
+      sport: data.sport ?? null,
+      action_id: data.action_id ?? null,
+      boxer_id: data.boxer_id ?? null,
     };
   });
 }

@@ -1,3 +1,3 @@
 from .boxer import Boxer
-from .frames import BoxingFrame
-from .actions import BoxerAction
+from .action import BoxerAction
+from .state import BoxingState

@@ -4,6 +4,8 @@ from api.models.boxing.enums import FootworkState
 
 # ActionState for Boxing
 class BoxingState(BaseModel):
+    id: str | None = None
+
     # What boxer state a move is executed from
     lead_hand: str | None
     rear_hand: str | None
