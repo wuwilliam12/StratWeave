@@ -18,6 +18,9 @@ export type NodePaletteItem = {
 
 const DEFAULT_ITEMS: NodePaletteItem[] = [
   { id: "strategy", label: "Strategy", nodeType: "strategy" },
+  { id: "scenario", label: "Scenario", nodeType: "scenario" },
+  { id: "sequence", label: "Sequence / Flow", nodeType: "sequence" },
+  { id: "node", label: "Node", nodeType: "node" },
   { id: "counter", label: "Counter", nodeType: "counter" },
   { id: "approach", label: "Approach", nodeType: "approach" },
 ];

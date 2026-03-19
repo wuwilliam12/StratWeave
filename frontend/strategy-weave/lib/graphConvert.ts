@@ -14,6 +14,8 @@ import type { GraphNode, GraphEdge } from "@/types/graph";
 export interface FlowNodeData {
   label: string;
   details?: string;
+  nodeType?: string | null;
+  strategy_id?: string | null;
   sport?: string | null;
   action_id?: string | null;
   boxer_id?: string | null;
@@ -26,6 +28,8 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
     position: { x: n.position_x, y: n.position_y },
     data: {
       label: n.label,
+      nodeType: n.node_type ?? "node",
+      strategy_id: n.strategy_id ?? null,
       sport: n.sport ?? null,
       action_id: n.action_id ?? null,
       boxer_id: n.boxer_id ?? null,
@@ -64,7 +68,9 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
       position_y: n.position?.y ?? 0,
       // TODO: once you introduce different node “kinds” (e.g. strategy vs
       // detail vs edge‑label mini node), set `node_type` from data here.
-      node_type: "strategy",
+      // Keep hierarchy type on the node so Explorer and future views stay aligned.
+      node_type: data.nodeType ?? "node",
+      strategy_id: data.strategy_id ?? null,
       sport: data.sport ?? null,
       action_id: data.action_id ?? null,
       boxer_id: data.boxer_id ?? null,

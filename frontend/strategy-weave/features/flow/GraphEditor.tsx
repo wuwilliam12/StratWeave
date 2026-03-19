@@ -35,9 +35,21 @@ import {
 import type { NodePaletteItem } from "./components";
 
 const defaultNodes: Node[] = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "Aggressive jab" } },
-  { id: "2", position: { x: 280, y: 0 }, data: { label: "Defensive clinching" } },
-  { id: "3", position: { x: 140, y: 120 }, data: { label: "Counter-punch" } },
+  {
+    id: "1",
+    position: { x: 0, y: 0 },
+    data: { label: "Pressure strategy", nodeType: "strategy" },
+  },
+  {
+    id: "2",
+    position: { x: 280, y: 0 },
+    data: { label: "Rope exchange scenario", nodeType: "scenario" },
+  },
+  {
+    id: "3",
+    position: { x: 140, y: 120 },
+    data: { label: "Jab-slip-counter flow", nodeType: "sequence" },
+  },
 ];
 
 const defaultEdges: Edge[] = [
@@ -74,7 +86,7 @@ function FlowHelpers({
         {
           id: nextNodeId(),
           position: flowPos,
-          data: { label: "New node" },
+          data: { label: "New node", nodeType: "node" },
         },
       ]);
       markDirty();
@@ -195,7 +207,7 @@ export default function GraphEditor() {
         {
           id: nextNodeId(),
           position: { x: 150 + nds.length * 30, y: 150 },
-          data: { label: "New node" },
+          data: { label: "New node", nodeType: "node" },
         },
       ]);
       markDirty();
