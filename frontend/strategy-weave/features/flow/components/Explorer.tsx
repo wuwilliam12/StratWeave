@@ -34,7 +34,7 @@ export default function Explorer({
         });
 
   return (
-    <div className="flex flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+    <div className="flex h-full min-h-0 flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
       <div className="border-b border-gray-200 p-2 dark:border-gray-700">
         <h2 className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
           Explorer
@@ -50,7 +50,8 @@ export default function Explorer({
           />
         )}
       </div>
-      <ul className="flex-1 overflow-auto p-2" role="list">
+      {/* Keep the node list independently scrollable inside the left rail. */}
+      <ul className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2" role="list">
         {filteredNodes.length === 0 ? (
           <li className="py-2 text-center text-sm text-gray-500">
             {nodes.length === 0 ? "No nodes" : "No matches"}

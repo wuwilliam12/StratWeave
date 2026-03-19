@@ -318,6 +318,7 @@ export default function GraphEditor() {
         {/* Left column - Palette/Explorer*/}
         <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 dark:border-gray-700">
           <Palette onSelect={handleAddNodeFromPalette} />
+          {/* This wrapper gives Explorer a bounded height so its own scrollbar can engage. */}
           <div className="flex-1 overflow-hidden">
             <Explorer
               nodes={nodes}

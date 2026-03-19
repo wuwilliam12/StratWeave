@@ -1,28 +1,78 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f3efe7;
   --foreground: #171717;
+  --font-ui: "Avenir Next", "Segoe UI", sans-serif;
+  --font-code: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --surface: rgba(255, 250, 241, 0.78);
+  --surface-strong: rgba(255, 247, 233, 0.92);
+  --border: rgba(23, 23, 23, 0.12);
+  --muted: #655e57;
+  --accent: #bf5b2c;
+  --accent-strong: #8e3817;
+  --grid: rgba(191, 91, 44, 0.08);
 }
 
 @theme inline {
+  /* Shared design tokens for the splash/home skeletons. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #151311;
+    --foreground: #f7f0e8;
+    --surface: rgba(35, 29, 25, 0.82);
+    --surface-strong: rgba(45, 37, 31, 0.92);
+    --border: rgba(247, 240, 232, 0.12);
+    --muted: #c7beb4;
+    --accent: #f08d53;
+    --accent-strong: #ffb27f;
+    --grid: rgba(240, 141, 83, 0.12);
   }
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Soft gradients keep the empty shells from feeling flat. */
+  background:
+    radial-gradient(circle at top left, rgba(240, 141, 83, 0.2), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(99, 138, 112, 0.16), transparent 26%),
+    linear-gradient(180deg, var(--background), color-mix(in srgb, var(--background) 82%, #ffffff 18%));
+  min-height: 100%;
+}
+
 body {
+  /* Grid texture gives the landing pages a light systems/diagram feel. */
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 72px 72px;
+  font-family: var(--font-ui);
   margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 32%, white 68%);
 }
