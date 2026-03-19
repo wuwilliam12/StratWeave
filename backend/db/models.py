@@ -18,7 +18,7 @@ class NodeModel(Base):
     label: Mapped[str] = mapped_column(Text, nullable=False)
     sport: Mapped[str | None] = mapped_column(String(32), nullable=True)
     action_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    boxer_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    athlete_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     position_x: Mapped[float] = mapped_column(Float, default=0)
     position_y: Mapped[float] = mapped_column(Float, default=0)
     node_type: Mapped[str] = mapped_column(String(64), default="strategy")
