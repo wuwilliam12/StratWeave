@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Handle, Position, type NodeProps } from "reactflow";
 import type { FlowNodeData } from "@/lib/graphConvert";
-import { getFlowNodeTypeOption } from "../nodeTypes";
+import { getFlowNodeTypeOption } from "./nodeTypes";
 
 export default function StrategyNode({
   id,
@@ -14,8 +14,8 @@ export default function StrategyNode({
   const typeOption = getFlowNodeTypeOption(data.nodeType);
   const details = data.details?.trim();
   const linkedAction = data.action_id?.trim();
-  const linkedBoxer = data.boxer_id?.trim();
-  const hasContext = Boolean(details || linkedAction || linkedBoxer || data.sport);
+  const linkedAthlete = data.athlete_id?.trim();
+  const hasContext = Boolean(details || linkedAction || linkedAthlete || data.sport);
 
   return (
     <div
@@ -73,7 +73,7 @@ export default function StrategyNode({
             <div className="space-y-1 border-t border-slate-200 pt-2 text-[11px] text-slate-500">
               {data.sport ? <div>Sport: {data.sport}</div> : null}
               {linkedAction ? <div>Action ID: {linkedAction}</div> : null}
-              {linkedBoxer ? <div>Boxer ID: {linkedBoxer}</div> : null}
+              {linkedAthlete ? <div>Boxer ID: {linkedAthlete}</div> : null}
             </div>
           ) : null}
         </div>
@@ -84,4 +84,3 @@ export default function StrategyNode({
     </div>
   );
 }
-

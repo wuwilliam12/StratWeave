@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchActions, type BoxerAction } from "@/lib/api";
-import { FLOW_NODE_TYPE_OPTIONS } from "../nodeTypes";
+import { FLOW_NODE_TYPE_OPTIONS } from "../nodes/nodeTypes";
 
 /**
  * Node palette: list of node types (or "Add node") to add to the canvas.

@@ -32,11 +32,11 @@ import {
   CanvasContextMenu,
   NodeContextMenu,
   StrategyNode,
-  NodeEditorPanel,
+  NodeInspector,
+  CUSTOM_FLOW_NODE_TYPE,
 } from "./components";
 import type { NodePaletteItem } from "./components";
 import type { FlowNodeData } from "@/lib/graphConvert";
-import { CUSTOM_FLOW_NODE_TYPE } from "./nodeTypes";
 
 const defaultNodes: Node[] = [
   {
@@ -422,7 +422,7 @@ export default function GraphEditor() {
 
   return (
     <div className="flex h-full w-full flex-col">
-      {/* ToolBar */}
+      {/* Control bar - top row */}
       <Toolbar
         onAddNode={() => handleAddNode()}
         onDeleteSelected={handleDeleteSelected}
@@ -517,7 +517,7 @@ export default function GraphEditor() {
             </div>
           )}
 
-          <NodeEditorPanel
+          <NodeInspector
             node={editingNode}
             onClose={() => setEditingNodeId(null)}
             onChange={handleUpdateNode}

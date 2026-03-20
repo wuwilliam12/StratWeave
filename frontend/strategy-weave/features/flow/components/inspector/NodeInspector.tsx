@@ -3,21 +3,23 @@
 import React from "react";
 import type { Node } from "reactflow";
 import type { FlowNodeData } from "@/lib/graphConvert";
-import { FLOW_NODE_TYPE_OPTIONS } from "../nodeTypes";
+import { FLOW_NODE_TYPE_OPTIONS } from "../nodes/nodeTypes";
 
 type FlowNodePatch = Partial<Pick<FlowNodeData, "label" | "details" | "nodeType">>;
 
-export interface NodeEditorPanelProps {
+export interface NodeInspectorProps {
   node: Node<FlowNodeData> | null;
   onClose?: () => void;
   onChange?: (nodeId: string, patch: FlowNodePatch) => void;
 }
 
-export default function NodeEditorPanel({
+export type NodeEditorPanelProps = NodeInspectorProps;
+
+export default function NodeInspector({
   node,
   onClose,
   onChange,
-}: NodeEditorPanelProps) {
+}: NodeInspectorProps) {
   if (!node) return null;
 
   const data = (node.data ?? {}) as FlowNodeData;

@@ -28,7 +28,6 @@ export default function Toolbar({
 }: ToolbarProps) {
   return (
     <div className="flex items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-2 py-2 dark:border-gray-700 dark:bg-gray-800">
-      {/* Actions */}
       <div className="flex items-center gap-1">
         {/* Add node */}
         <button
