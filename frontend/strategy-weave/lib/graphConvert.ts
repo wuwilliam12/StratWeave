@@ -18,7 +18,8 @@ export interface FlowNodeData {
   strategy_id?: string | null;
   sport?: string | null;
   action_id?: string | null;
-  boxer_id?: string | null;
+  athlete_id?: string | null;
+  onEdit?: (nodeId: string) => void;
 }
 
 /* Convert API nodes to React Flow nodes */
@@ -32,7 +33,7 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
       strategy_id: n.strategy_id ?? null,
       sport: n.sport ?? null,
       action_id: n.action_id ?? null,
-      boxer_id: n.boxer_id ?? null,
+      athlete_id: n.athlete_id ?? null,
     } as FlowNodeData,
   }));
 }
@@ -73,7 +74,7 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
       strategy_id: data.strategy_id ?? null,
       sport: data.sport ?? null,
       action_id: data.action_id ?? null,
-      boxer_id: data.boxer_id ?? null,
+      athlete_id: data.athlete_id ?? null,
     };
   });
 }

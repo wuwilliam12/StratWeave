@@ -9,8 +9,7 @@ import type { Node } from "reactflow";
  */
 export interface NodeContextMenuProps {
   node: Node;
-  x: number;
-  y: number;
+  onEdit?: (node: Node) => void;
   onDuplicate?: (node: Node) => void;
   onDelete?: (node: Node) => void;
   onClose?: () => void;
@@ -18,12 +17,16 @@ export interface NodeContextMenuProps {
 
 export default function NodeContextMenu({
   node,
-  x,
-  y,
+  onEdit,
   onDuplicate,
   onDelete,
   onClose,
 }: NodeContextMenuProps) {
+  const handleEdit = () => {
+    onEdit?.(node);
+    onClose?.();
+  };
+
   const handleDuplicate = () => {
     onDuplicate?.(node);
     onClose?.();
@@ -41,6 +44,14 @@ export default function NodeContextMenu({
     >
       <button
         type="button"
+        onClick={handleEdit}
+        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+        role="menuitem"
+      >
+        Edit node
+      </button>
+      <button
+        type="button"
         onClick={handleDuplicate}
         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
         role="menuitem"
@@ -55,7 +66,6 @@ export default function NodeContextMenu({
       >
         Delete node
       </button>
-      {/* Future: Edit label, Add edge from here, etc. */}
     </div>
   );
 }

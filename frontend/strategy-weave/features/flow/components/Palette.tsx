@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchActions, type BoxerAction } from "@/lib/api";
+import { FLOW_NODE_TYPE_OPTIONS } from "../nodeTypes";
 
 /**
  * Node palette: list of node types (or "Add node") to add to the canvas.
@@ -16,14 +17,11 @@ export type NodePaletteItem = {
   boxer_id?: string | null;
 };
 
-const DEFAULT_ITEMS: NodePaletteItem[] = [
-  { id: "strategy", label: "Strategy", nodeType: "strategy" },
-  { id: "scenario", label: "Scenario", nodeType: "scenario" },
-  { id: "sequence", label: "Sequence / Flow", nodeType: "sequence" },
-  { id: "node", label: "Node", nodeType: "node" },
-  { id: "counter", label: "Counter", nodeType: "counter" },
-  { id: "approach", label: "Approach", nodeType: "approach" },
-];
+const DEFAULT_ITEMS: NodePaletteItem[] = FLOW_NODE_TYPE_OPTIONS.map((option) => ({
+  id: option.value,
+  label: option.label,
+  nodeType: option.value,
+}));
 
 export interface PaletteProps {
   items?: NodePaletteItem[];
@@ -51,7 +49,7 @@ export default function Palette({
   const actionItems: NodePaletteItem[] = boxingActions.map((a) => ({
     id: a.id ?? `action-${a.name}`,
     label: a.name,
-    nodeType: "strategy",
+    nodeType: "action",
     sport: "boxing",
     action_id: a.id ?? null,
     boxer_id: null,
@@ -72,6 +70,7 @@ export default function Palette({
               onClick={() => onSelect?.(item)}
               className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-600"
               role="option"
+              aria-selected="false"
             >
               {item.label}
             </button>

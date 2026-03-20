@@ -15,3 +15,8 @@ export type { PaletteProps, NodePaletteItem } from "./Palette";
 
 export { default as Explorer } from "./Explorer";
 export type { ExplorerProps } from "./Explorer";
+
+export { default as StrategyNode } from "./StrategyNode";
+
+export { default as NodeEditorPanel } from "./NodeEditorPanel";
+export type { NodeEditorPanelProps } from "./NodeEditorPanel";

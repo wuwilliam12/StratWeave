@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactFlow, {
   addEdge,
   Background,
@@ -31,22 +31,29 @@ import {
   Explorer,
   CanvasContextMenu,
   NodeContextMenu,
+  StrategyNode,
+  NodeEditorPanel,
 } from "./components";
 import type { NodePaletteItem } from "./components";
+import type { FlowNodeData } from "@/lib/graphConvert";
+import { CUSTOM_FLOW_NODE_TYPE } from "./nodeTypes";
 
 const defaultNodes: Node[] = [
   {
     id: "1",
+    type: CUSTOM_FLOW_NODE_TYPE,
     position: { x: 0, y: 0 },
     data: { label: "Pressure strategy", nodeType: "strategy" },
   },
   {
     id: "2",
+    type: CUSTOM_FLOW_NODE_TYPE,
     position: { x: 280, y: 0 },
     data: { label: "Rope exchange scenario", nodeType: "scenario" },
   },
   {
     id: "3",
+    type: CUSTOM_FLOW_NODE_TYPE,
     position: { x: 140, y: 120 },
     data: { label: "Jab-slip-counter flow", nodeType: "sequence" },
   },
@@ -63,6 +70,47 @@ function nextNodeId(): string {
   return `node-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function attachNodeEditor(
+  nodes: Node[],
+  onEdit: (nodeId: string) => void,
+): Node[] {
+  return nodes.map((node) => ({
+    ...node,
+    type: CUSTOM_FLOW_NODE_TYPE,
+    data: {
+      ...(node.data as FlowNodeData | undefined),
+      onEdit,
+    },
+  }));
+}
+
+function mergeFrontendNodeData(
+  nextNodes: Node[],
+  currentNodes: Node[],
+): Node[] {
+  const currentNodeData = new Map(
+    currentNodes.map((node) => [node.id, (node.data ?? {}) as FlowNodeData]),
+  );
+
+  return nextNodes.map((node) => {
+    const currentData = currentNodeData.get(node.id);
+
+    if (!currentData) {
+      return node;
+    }
+
+    return {
+      ...node,
+      data: {
+        ...(node.data as FlowNodeData | undefined),
+        details:
+          currentData.details ??
+          (node.data as FlowNodeData | undefined)?.details,
+      },
+    };
+  });
+}
+
 /**
  * Inside ReactFlow: provides addNodeAtScreenPosition to parent via ref
  * so canvas context menu can add a node at the click position (flow coords).
@@ -71,10 +119,12 @@ function FlowHelpers({
   setNodes,
   addNodeAtScreenRef,
   markDirty,
+  onEdit,
 }: {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   addNodeAtScreenRef: React.MutableRefObject<((clientX: number, clientY: number) => void) | null>;
   markDirty: () => void;
+  onEdit: (nodeId: string) => void;
 }) {
   const { screenToFlowPosition } = useReactFlow();
 
@@ -85,8 +135,9 @@ function FlowHelpers({
         ...nds,
         {
           id: nextNodeId(),
+          type: CUSTOM_FLOW_NODE_TYPE,
           position: flowPos,
-          data: { label: "New node", nodeType: "node" },
+          data: { label: "New node", nodeType: "node", details: "", onEdit },
         },
       ]);
       markDirty();
@@ -94,7 +145,7 @@ function FlowHelpers({
     return () => {
       addNodeAtScreenRef.current = null;
     };
-  }, [screenToFlowPosition, setNodes, addNodeAtScreenRef, markDirty]);
+  }, [screenToFlowPosition, setNodes, addNodeAtScreenRef, markDirty, onEdit]);
 
   return null;
 }
@@ -107,6 +158,7 @@ export default function GraphEditor() {
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [explorerSearch, setExplorerSearch] = useState("");
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
 
   // Context menus: screen position and optional node for node menu
   const [canvasMenu, setCanvasMenu] = useState<{ x: number; y: number } | null>(null);
@@ -115,6 +167,10 @@ export default function GraphEditor() {
   const addNodeAtScreenRef = useRef<((clientX: number, clientY: number) => void) | null>(null);
 
   const markDirty = useCallback(() => setDirty(true), []);
+  const handleOpenNodeEditor = useCallback((nodeId: string) => {
+    setEditingNodeId(nodeId);
+  }, []);
+  const nodeTypes = useMemo(() => ({ [CUSTOM_FLOW_NODE_TYPE]: StrategyNode }), []);
 
   const onNodesChangeWithDirty = useCallback(
     (changes: NodeChange[]) => {
@@ -140,7 +196,12 @@ export default function GraphEditor() {
       .then((payload) => {
         if (cancelled) return;
         if (payload.nodes.length > 0 || payload.edges.length > 0) {
-          setNodes(toFlowNodes(payload.nodes));
+          setNodes((currentNodes) =>
+            attachNodeEditor(
+              mergeFrontendNodeData(toFlowNodes(payload.nodes), currentNodes),
+              handleOpenNodeEditor,
+            ),
+          );
           setEdges(toFlowEdges(payload.edges));
         }
         setDirty(false);
@@ -156,7 +217,11 @@ export default function GraphEditor() {
     return () => {
       cancelled = true;
     };
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, handleOpenNodeEditor]);
+
+  useEffect(() => {
+    setNodes((existingNodes) => attachNodeEditor(existingNodes, handleOpenNodeEditor));
+  }, [handleOpenNodeEditor, setNodes]);
 
   // Close context menus on click outside
   useEffect(() => {
@@ -185,7 +250,12 @@ export default function GraphEditor() {
       edges: toApiEdges(edges),
     })
       .then((payload) => {
-        setNodes(toFlowNodes(payload.nodes));
+        setNodes((currentNodes) =>
+          attachNodeEditor(
+            mergeFrontendNodeData(toFlowNodes(payload.nodes), currentNodes),
+            handleOpenNodeEditor,
+          ),
+        );
         setEdges(toFlowEdges(payload.edges));
         setDirty(false);
       })
@@ -193,7 +263,7 @@ export default function GraphEditor() {
         setError(err instanceof Error ? err.message : "Failed to save graph");
       })
       .finally(() => setSaving(false));
-  }, [nodes, edges, setNodes, setEdges]);
+  }, [nodes, edges, setNodes, setEdges, handleOpenNodeEditor]);
 
   const handleAddNode = useCallback(
     (position?: { x: number; y: number }) => {
@@ -206,13 +276,14 @@ export default function GraphEditor() {
         ...nds,
         {
           id: nextNodeId(),
+          type: CUSTOM_FLOW_NODE_TYPE,
           position: { x: 150 + nds.length * 30, y: 150 },
-          data: { label: "New node", nodeType: "node" },
+          data: { label: "New node", nodeType: "node", onEdit: handleOpenNodeEditor },
         },
       ]);
       markDirty();
     },
-    [setNodes, markDirty],
+    [setNodes, markDirty, handleOpenNodeEditor],
   );
 
   const handleAddNodeFromPalette = useCallback(
@@ -221,23 +292,36 @@ export default function GraphEditor() {
         ...nds,
         {
           id: nextNodeId(),
+          type: CUSTOM_FLOW_NODE_TYPE,
           position: { x: 150 + nds.length * 30, y: 150 },
           data: {
             label: item.label,
             nodeType: item.nodeType,
+            details: "",
             sport: item.sport ?? null,
             action_id: item.action_id ?? null,
             boxer_id: item.boxer_id ?? null,
+            onEdit: handleOpenNodeEditor,
           },
         },
       ]);
       markDirty();
     },
-    [setNodes, markDirty],
+    [setNodes, markDirty, handleOpenNodeEditor],
   );
 
   const handleDeleteSelected = useCallback(() => {
-    setNodes((nds) => nds.filter((n) => !n.selected));
+    setNodes((nds) => {
+      const deletedNodeIds = new Set(
+        nds.filter((node) => node.selected).map((node) => node.id),
+      );
+
+      setEditingNodeId((current) =>
+        current && deletedNodeIds.has(current) ? null : current,
+      );
+
+      return nds.filter((node) => !node.selected);
+    });
     setEdges((eds) => eds.filter((e) => !e.selected));
     markDirty();
   }, [setNodes, setEdges, markDirty]);
@@ -268,9 +352,34 @@ export default function GraphEditor() {
       setEdges((eds) =>
         eds.filter((e) => e.source !== node.id && e.target !== node.id),
       );
+      setEditingNodeId((current) => (current === node.id ? null : current));
       markDirty();
     },
     [setNodes, setEdges, markDirty],
+  );
+
+  const handleUpdateNode = useCallback(
+    (
+      nodeId: string,
+      patch: Partial<Pick<FlowNodeData, "label" | "details" | "nodeType">>,
+    ) => {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                data: {
+                  ...(node.data as FlowNodeData),
+                  ...patch,
+                  onEdit: handleOpenNodeEditor,
+                },
+              }
+            : node,
+        ),
+      );
+      markDirty();
+    },
+    [setNodes, markDirty, handleOpenNodeEditor],
   );
 
   const handleCanvasAddNode = useCallback(
@@ -297,14 +406,16 @@ export default function GraphEditor() {
   const selectedNodeIds = new Set(
     nodes.filter((n) => n.selected).map((n) => n.id),
   );
+  const editingNode =
+    nodes.find((node) => node.id === editingNodeId) ?? null;
 
   const toolbarStatus = error ?? (dirty ? "Unsaved" : "Saved");
 
-  {/* Show loading indicator */}
+  /* Show loading indicator */
   if (loading) {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center text-gray-500">
-        Loading graph…
+        Loading graph...
       </div>
     );
   }
@@ -348,6 +459,7 @@ export default function GraphEditor() {
           <ReactFlow
             nodes={nodes}
             edges={edges}
+            nodeTypes={nodeTypes}
             onNodesChange={onNodesChangeWithDirty}
             onEdgesChange={onEdgesChangeWithDirty}
             onConnect={onConnect}
@@ -363,7 +475,12 @@ export default function GraphEditor() {
             }}
             fitView
           >
-            <FlowHelpers setNodes={setNodes} addNodeAtScreenRef={addNodeAtScreenRef} markDirty={markDirty} />
+            <FlowHelpers
+              setNodes={setNodes}
+              addNodeAtScreenRef={addNodeAtScreenRef}
+              markDirty={markDirty}
+              onEdit={handleOpenNodeEditor}
+            />
             <MiniMap />
             <Controls />
             <Background />
@@ -392,14 +509,19 @@ export default function GraphEditor() {
             >
               <NodeContextMenu
                 node={nodeMenu.node}
-                x={nodeMenu.x}
-                y={nodeMenu.y}
+                onEdit={(node) => handleOpenNodeEditor(node.id)}
                 onDuplicate={handleDuplicateNode}
                 onDelete={handleDeleteNode}
                 onClose={() => setNodeMenu(null)}
               />
             </div>
           )}
+
+          <NodeEditorPanel
+            node={editingNode}
+            onClose={() => setEditingNodeId(null)}
+            onChange={handleUpdateNode}
+          />
         </main>
       </div>
     </div>
