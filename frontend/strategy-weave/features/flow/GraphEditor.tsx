@@ -1,22 +1,16 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactFlow, {
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
   addEdge,
-  Background,
-  Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
-  useReactFlow,
-  Connection,
-  type Node,
+  type Connection,
   type Edge,
-  type NodeChange,
   type EdgeChange,
+  type Node,
+  type NodeChange,
 } from "reactflow";
-
-import "reactflow/dist/style.css";
 
 import { fetchGraph, saveGraph } from "@/lib/api";
 import {
@@ -26,13 +20,10 @@ import {
   toApiEdges,
 } from "@/lib/graphConvert";
 import {
-  Toolbar,
-  Palette,
-  Explorer,
-  CanvasContextMenu,
-  NodeContextMenu,
+  ControlBar,
+  SideBar,
+  GraphCanvas,
   StrategyNode,
-  NodeInspector,
   CUSTOM_FLOW_NODE_TYPE,
 } from "./components";
 import type { NodePaletteItem } from "./components";
@@ -111,45 +102,6 @@ function mergeFrontendNodeData(
   });
 }
 
-/**
- * Inside ReactFlow: provides addNodeAtScreenPosition to parent via ref
- * so canvas context menu can add a node at the click position (flow coords).
- */
-function FlowHelpers({
-  setNodes,
-  addNodeAtScreenRef,
-  markDirty,
-  onEdit,
-}: {
-  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
-  addNodeAtScreenRef: React.MutableRefObject<((clientX: number, clientY: number) => void) | null>;
-  markDirty: () => void;
-  onEdit: (nodeId: string) => void;
-}) {
-  const { screenToFlowPosition } = useReactFlow();
-
-  useEffect(() => {
-    addNodeAtScreenRef.current = (clientX: number, clientY: number) => {
-      const flowPos = screenToFlowPosition({ x: clientX, y: clientY });
-      setNodes((nds) => [
-        ...nds,
-        {
-          id: nextNodeId(),
-          type: CUSTOM_FLOW_NODE_TYPE,
-          position: flowPos,
-          data: { label: "New node", nodeType: "node", details: "", onEdit },
-        },
-      ]);
-      markDirty();
-    };
-    return () => {
-      addNodeAtScreenRef.current = null;
-    };
-  }, [screenToFlowPosition, setNodes, addNodeAtScreenRef, markDirty, onEdit]);
-
-  return null;
-}
-
 export default function GraphEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
@@ -159,12 +111,6 @@ export default function GraphEditor() {
   const [dirty, setDirty] = useState(false);
   const [explorerSearch, setExplorerSearch] = useState("");
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-
-  // Context menus: screen position and optional node for node menu
-  const [canvasMenu, setCanvasMenu] = useState<{ x: number; y: number } | null>(null);
-  const [nodeMenu, setNodeMenu] = useState<{ node: Node; x: number; y: number } | null>(null);
-
-  const addNodeAtScreenRef = useRef<((clientX: number, clientY: number) => void) | null>(null);
 
   const markDirty = useCallback(() => setDirty(true), []);
   const handleOpenNodeEditor = useCallback((nodeId: string) => {
@@ -223,17 +169,6 @@ export default function GraphEditor() {
     setNodes((existingNodes) => attachNodeEditor(existingNodes, handleOpenNodeEditor));
   }, [handleOpenNodeEditor, setNodes]);
 
-  // Close context menus on click outside
-  useEffect(() => {
-    if (!canvasMenu && !nodeMenu) return;
-    const handleClose = () => {
-      setCanvasMenu(null);
-      setNodeMenu(null);
-    };
-    window.addEventListener("click", handleClose);
-    return () => window.removeEventListener("click", handleClose);
-  }, [canvasMenu, nodeMenu]);
-
   const onConnect = useCallback(
     (connection: Connection) => {
       setEdges((eds) => addEdge(connection, eds));
@@ -267,18 +202,13 @@ export default function GraphEditor() {
 
   const handleAddNode = useCallback(
     (position?: { x: number; y: number }) => {
-      if (position != null && addNodeAtScreenRef.current) {
-        addNodeAtScreenRef.current(position.x, position.y);
-        markDirty();
-        return;
-      }
       setNodes((nds) => [
         ...nds,
         {
           id: nextNodeId(),
           type: CUSTOM_FLOW_NODE_TYPE,
-          position: { x: 150 + nds.length * 30, y: 150 },
-          data: { label: "New node", nodeType: "node", onEdit: handleOpenNodeEditor },
+          position: position ?? { x: 150 + nds.length * 30, y: 150 },
+          data: { label: "New node", nodeType: "node", details: "", onEdit: handleOpenNodeEditor },
         },
       ]);
       markDirty();
@@ -382,18 +312,6 @@ export default function GraphEditor() {
     [setNodes, markDirty, handleOpenNodeEditor],
   );
 
-  const handleCanvasAddNode = useCallback(
-    (position: { x: number; y: number }) => {
-      if (addNodeAtScreenRef.current) {
-        addNodeAtScreenRef.current(position.x, position.y);
-      } else {
-        handleAddNode();
-      }
-      setCanvasMenu(null);
-    },
-    [handleAddNode],
-  );
-
   const handleSelectNodeInExplorer = useCallback(
     (nodeId: string) => {
       setNodes((nds) =>
@@ -409,7 +327,7 @@ export default function GraphEditor() {
   const editingNode =
     nodes.find((node) => node.id === editingNodeId) ?? null;
 
-  const toolbarStatus = error ?? (dirty ? "Unsaved" : "Saved");
+  const controlBarStatus = error ?? (dirty ? "Unsaved" : "Saved");
 
   /* Show loading indicator */
   if (loading) {
@@ -423,7 +341,13 @@ export default function GraphEditor() {
   return (
     <div className="flex h-full w-full flex-col">
       {/* Control bar - top row */}
-      <Toolbar
+      <ControlBar
+        title="Strategy graph editor"
+        subtitle={`${nodes.length} nodes and ${edges.length} edges in the current working graph.`}
+        fileActions={[
+          { label: "Import soon", disabled: true, tone: "muted" },
+          { label: "Export soon", disabled: true, tone: "muted" },
+        ]}
         onAddNode={() => handleAddNode()}
         onDeleteSelected={handleDeleteSelected}
         onSave={handleSave}
@@ -431,7 +355,7 @@ export default function GraphEditor() {
         saving={saving}
         status={
           <span className={error ? "text-red-600" : ""} role={error ? "alert" : undefined}>
-            {toolbarStatus}
+            {controlBarStatus}
           </span>
         }
       />
@@ -439,90 +363,31 @@ export default function GraphEditor() {
       {/* Main body section */}
       <div className="flex flex-1 min-h-0">
         {/* Left column - Palette/Explorer*/}
-        <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 dark:border-gray-700">
-          <Palette onSelect={handleAddNodeFromPalette} />
-          {/* This wrapper gives Explorer a bounded height so its own scrollbar can engage. */}
-          <div className="flex-1 overflow-hidden">
-            <Explorer
-              nodes={nodes}
-              edges={edges}
-              selectedNodeIds={selectedNodeIds}
-              onSelectNode={handleSelectNodeInExplorer}
-              search={explorerSearch}
-              onSearchChange={setExplorerSearch}
-            />
-          </div>
-        </aside>
+        <SideBar
+          nodes={nodes}
+          edges={edges}
+          selectedNodeIds={selectedNodeIds}
+          onSelectNode={handleSelectNodeInExplorer}
+          search={explorerSearch}
+          onSearchChange={setExplorerSearch}
+          onSelectPaletteItem={handleAddNodeFromPalette}
+        />
 
-        {/* Right column - Flow/Graph area */}
-        <main className="relative flex-1">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChangeWithDirty}
-            onEdgesChange={onEdgesChangeWithDirty}
-            onConnect={onConnect}
-            onPaneContextMenu={(e) => {
-              e.preventDefault();
-              setCanvasMenu({ x: e.clientX, y: e.clientY });
-              setNodeMenu(null);
-            }}
-            onNodeContextMenu={(e, node) => {
-              e.preventDefault();
-              setNodeMenu({ node, x: e.clientX, y: e.clientY });
-              setCanvasMenu(null);
-            }}
-            fitView
-          >
-            <FlowHelpers
-              setNodes={setNodes}
-              addNodeAtScreenRef={addNodeAtScreenRef}
-              markDirty={markDirty}
-              onEdit={handleOpenNodeEditor}
-            />
-            <MiniMap />
-            <Controls />
-            <Background />
-          </ReactFlow>
-
-          {canvasMenu && (
-            <div
-              className="fixed z-50"
-              style={{ left: canvasMenu.x, top: canvasMenu.y }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <CanvasContextMenu
-                x={canvasMenu.x}
-                y={canvasMenu.y}
-                onAddNode={handleCanvasAddNode}
-                onClose={() => setCanvasMenu(null)}
-              />
-            </div>
-          )}
-
-          {nodeMenu && (
-            <div
-              className="fixed z-50"
-              style={{ left: nodeMenu.x, top: nodeMenu.y }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <NodeContextMenu
-                node={nodeMenu.node}
-                onEdit={(node) => handleOpenNodeEditor(node.id)}
-                onDuplicate={handleDuplicateNode}
-                onDelete={handleDeleteNode}
-                onClose={() => setNodeMenu(null)}
-              />
-            </div>
-          )}
-
-          <NodeInspector
-            node={editingNode}
-            onClose={() => setEditingNodeId(null)}
-            onChange={handleUpdateNode}
-          />
-        </main>
+        <GraphCanvas
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          editingNode={editingNode}
+          onNodesChange={onNodesChangeWithDirty}
+          onEdgesChange={onEdgesChangeWithDirty}
+          onConnect={onConnect}
+          onAddNodeAtPosition={handleAddNode}
+          onEditNode={handleOpenNodeEditor}
+          onDuplicateNode={handleDuplicateNode}
+          onDeleteNode={handleDeleteNode}
+          onCloseInspector={() => setEditingNodeId(null)}
+          onChangeNode={handleUpdateNode}
+        />
       </div>
     </div>
   );

@@ -90,7 +90,7 @@ export default function NodeInspector({
         <div className="rounded-2xl border border-black/10 bg-white/55 p-3 text-xs text-[color:var(--color-muted)]">
           <div>Node ID: {node.id}</div>
           <div>Action ID: {data.action_id ?? "none"}</div>
-          <div>Boxer ID: {data.boxer_id ?? "none"}</div>
+          <div>Athlete ID: {data.athlete_id ?? "none"}</div>
         </div>
       </div>
     </aside>

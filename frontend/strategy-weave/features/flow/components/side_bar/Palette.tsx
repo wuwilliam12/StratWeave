@@ -26,9 +26,7 @@ const DEFAULT_ITEMS: NodePaletteItem[] = FLOW_NODE_TYPE_OPTIONS.map((option) => 
 export interface PaletteProps {
   items?: NodePaletteItem[];
   onSelect?: (item: NodePaletteItem) => void;
-  /** Drag start for DnD add (item + position set on drop) */
   onDragStart?: (item: NodePaletteItem) => void;
-  /** Include boxing actions from API (default: true) */
   includeBoxingActions?: boolean;
 }
 
@@ -46,19 +44,19 @@ export default function Palette({
       .catch(() => setBoxingActions([]));
   }, [includeBoxingActions]);
 
-  const actionItems: NodePaletteItem[] = boxingActions.map((a) => ({
-    id: a.id ?? `action-${a.name}`,
-    label: a.name,
+  const actionItems: NodePaletteItem[] = boxingActions.map((action) => ({
+    id: action.id ?? `action-${action.name}`,
+    label: action.name,
     nodeType: "action",
     sport: "boxing",
-    action_id: a.id ?? null,
+    action_id: action.id ?? null,
     boxer_id: null,
   }));
 
   const allItems = [...items, ...actionItems];
 
   return (
-    <div className="flex flex-col gap-1 border-r border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
+    <div className="flex flex-col gap-1 bg-transparent p-2">
       <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         Add node
       </h3>
@@ -68,7 +66,7 @@ export default function Palette({
             <button
               type="button"
               onClick={() => onSelect?.(item)}
-              className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-600"
+              className="w-full rounded-xl px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-800"
               role="option"
               aria-selected="false"
             >

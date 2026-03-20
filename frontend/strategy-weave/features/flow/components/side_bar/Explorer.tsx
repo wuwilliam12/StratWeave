@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import type { Node, Edge } from "reactflow";
+import type { Edge, Node } from "reactflow";
 import {
+  GRAPH_HIERARCHY_LEVELS,
   getNodeHierarchyLabel,
   getNodeHierarchyType,
-  GRAPH_HIERARCHY_LEVELS,
 } from "@/lib/graphHierarchy";
 
 /**
@@ -17,7 +17,6 @@ export interface ExplorerProps {
   edges?: Edge[];
   selectedNodeIds?: Set<string>;
   onSelectNode?: (nodeId: string) => void;
-  /** Optional search/filter (controlled by parent if provided) */
   search?: string;
   onSearchChange?: (value: string) => void;
 }
@@ -33,8 +32,8 @@ export default function Explorer({
   const filteredNodes =
     search.trim() === ""
       ? nodes
-      : nodes.filter((n) => {
-          const label = (n.data?.label as string) ?? "";
+      : nodes.filter((node) => {
+          const label = (node.data?.label as string) ?? "";
           return label.toLowerCase().includes(search.trim().toLowerCase());
         });
 
@@ -44,7 +43,7 @@ export default function Explorer({
   }));
 
   return (
-    <div className="flex h-full min-h-0 flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+    <div className="flex h-full min-h-0 flex-col bg-transparent">
       <div className="border-b border-gray-200 p-2 dark:border-gray-700">
         <h2 className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
           Explorer
@@ -52,15 +51,14 @@ export default function Explorer({
         {onSearchChange != null && (
           <input
             type="search"
-            placeholder="Search nodes…"
+            placeholder="Search nodes..."
             value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(event) => onSearchChange(event.target.value)}
             className="w-full rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
             aria-label="Search nodes"
           />
         )}
       </div>
-      {/* Keep the hierarchy list independently scrollable inside the left rail. */}
       <ul className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2" role="list">
         {filteredNodes.length === 0 ? (
           <li className="py-2 text-center text-sm text-gray-500">
@@ -106,7 +104,6 @@ export default function Explorer({
           ))
         )}
       </ul>
-      {/* Optional: show edge count or groups (Strategies / Counters / etc.) */}
       {edges.length > 0 && (
         <div className="border-t border-gray-200 px-2 py-1 text-xs text-gray-500 dark:border-gray-700">
           {nodes.length} nodes · {edges.length} edges
