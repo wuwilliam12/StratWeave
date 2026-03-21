@@ -100,7 +100,7 @@ export function toApiEdges(flowEdges: Edge[]): GraphEdge[] {
     // Keep a simple string label on the edge itself for now.
     // Mini node / rich label support will be layered on top of this.
     label: ((e.data as FlowEdgeData | undefined)?.label as string) ?? "",
-    probability: (e.data as FlowEdgeData | undefined)?.probability ?? null,
-    stamina_cost: (e.data as FlowEdgeData | undefined)?.staminaCost ?? null,
+    probability: (e.data as FlowEdgeData | undefined)?.probability ?? undefined,
+    stamina_cost: (e.data as FlowEdgeData | undefined)?.staminaCost ?? undefined,
   }));
 }
