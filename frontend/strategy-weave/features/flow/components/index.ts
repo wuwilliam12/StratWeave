@@ -5,6 +5,8 @@ export { default as CanvasContextMenu } from "./context_menu/CanvasContextMenu";
 export type { CanvasContextMenuProps } from "./context_menu/CanvasContextMenu";
 export { default as GraphCanvas } from "./canvas/GraphCanvas";
 export type { GraphCanvasProps } from "./canvas/GraphCanvas";
+export { default as ActionEdgeCard } from "./edges/ActionEdgeCard";
+export { CUSTOM_FLOW_EDGE_TYPE } from "./edges/edgeTypes";
 
 export { default as NodeContextMenu } from "./context_menu/NodeContextMenu";
 export type { NodeContextMenuProps } from "./context_menu/NodeContextMenu";
@@ -33,3 +35,5 @@ export type { FlowNodeTypeOption } from "./nodes/nodeTypes";
 export { default as NodeInspector } from "./inspector/NodeInspector";
 export { default as NodeEditorPanel } from "./inspector/NodeInspector";
 export type { NodeInspectorProps, NodeEditorPanelProps } from "./inspector/NodeInspector";
+export { default as EdgeInspector } from "./inspector/EdgeInspector";
+export type { EdgeInspectorProps } from "./inspector/EdgeInspector";

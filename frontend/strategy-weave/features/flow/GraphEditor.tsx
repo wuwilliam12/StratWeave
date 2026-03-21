@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   addEdge,
   useNodesState,
@@ -23,11 +24,13 @@ import {
   ControlBar,
   SideBar,
   GraphCanvas,
+  ActionEdgeCard,
   StrategyNode,
+  CUSTOM_FLOW_EDGE_TYPE,
   CUSTOM_FLOW_NODE_TYPE,
 } from "./components";
 import type { NodePaletteItem } from "./components";
-import type { FlowNodeData } from "@/lib/graphConvert";
+import type { FlowEdgeData, FlowNodeData } from "@/lib/graphConvert";
 
 const defaultNodes: Node[] = [
   {
@@ -51,9 +54,27 @@ const defaultNodes: Node[] = [
 ];
 
 const defaultEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2", data: { label: "counters" } },
-  { id: "e2-3", source: "2", target: "3", data: { label: "leads to" } },
-  { id: "e3-1", source: "3", target: "1", data: { label: "counters" } },
+  {
+    id: "e1-2",
+    type: CUSTOM_FLOW_EDGE_TYPE,
+    source: "1",
+    target: "2",
+    data: { label: "Cut off escape", staminaCost: 1 } as FlowEdgeData,
+  },
+  {
+    id: "e2-3",
+    type: CUSTOM_FLOW_EDGE_TYPE,
+    source: "2",
+    target: "3",
+    data: { label: "Slip into counter", probability: 0.62 } as FlowEdgeData,
+  },
+  {
+    id: "e3-1",
+    type: CUSTOM_FLOW_EDGE_TYPE,
+    source: "3",
+    target: "1",
+    data: { label: "Reset pressure" } as FlowEdgeData,
+  },
 ];
 
 /** Generates a unique node id. */
@@ -103,6 +124,7 @@ function mergeFrontendNodeData(
 }
 
 export default function GraphEditor() {
+  const router = useRouter();
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
   const [loading, setLoading] = useState(true);
@@ -110,13 +132,20 @@ export default function GraphEditor() {
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [explorerSearch, setExplorerSearch] = useState("");
+  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
 
   const markDirty = useCallback(() => setDirty(true), []);
   const handleOpenNodeEditor = useCallback((nodeId: string) => {
+    setEditingEdgeId(null);
     setEditingNodeId(nodeId);
   }, []);
+  const handleOpenEdgeEditor = useCallback((edgeId: string) => {
+    setEditingNodeId(null);
+    setEditingEdgeId(edgeId);
+  }, []);
   const nodeTypes = useMemo(() => ({ [CUSTOM_FLOW_NODE_TYPE]: StrategyNode }), []);
+  const edgeTypes = useMemo(() => ({ [CUSTOM_FLOW_EDGE_TYPE]: ActionEdgeCard }), []);
 
   const onNodesChangeWithDirty = useCallback(
     (changes: NodeChange[]) => {
@@ -171,7 +200,17 @@ export default function GraphEditor() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      setEdges((eds) => addEdge(connection, eds));
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...connection,
+            type: CUSTOM_FLOW_EDGE_TYPE,
+            data: { label: "New action" } as FlowEdgeData,
+          },
+          eds,
+        ),
+      );
+      setEditingNodeId(null);
       markDirty();
     },
     [setEdges, markDirty],
@@ -241,6 +280,10 @@ export default function GraphEditor() {
   );
 
   const handleDeleteSelected = useCallback(() => {
+    const selectedEdgeIds = new Set(
+      edges.filter((edge) => edge.selected).map((edge) => edge.id),
+    );
+
     setNodes((nds) => {
       const deletedNodeIds = new Set(
         nds.filter((node) => node.selected).map((node) => node.id),
@@ -253,8 +296,11 @@ export default function GraphEditor() {
       return nds.filter((node) => !node.selected);
     });
     setEdges((eds) => eds.filter((e) => !e.selected));
+    setEditingEdgeId((current) =>
+      current && selectedEdgeIds.has(current) ? null : current,
+    );
     markDirty();
-  }, [setNodes, setEdges, markDirty]);
+  }, [setNodes, setEdges, markDirty, edges]);
 
   const handleDuplicateNode = useCallback(
     (node: Node) => {
@@ -278,14 +324,43 @@ export default function GraphEditor() {
 
   const handleDeleteNode = useCallback(
     (node: Node) => {
+      const linkedEdgeIds = new Set(
+        edges
+          .filter((edge) => edge.source === node.id || edge.target === node.id)
+          .map((edge) => edge.id),
+      );
+
       setNodes((nds) => nds.filter((n) => n.id !== node.id));
       setEdges((eds) =>
         eds.filter((e) => e.source !== node.id && e.target !== node.id),
       );
+      setEditingEdgeId((current) => {
+        return current && linkedEdgeIds.has(current) ? null : current;
+      });
       setEditingNodeId((current) => (current === node.id ? null : current));
       markDirty();
     },
-    [setNodes, setEdges, markDirty],
+    [setNodes, setEdges, markDirty, edges],
+  );
+
+  const handleUpdateEdge = useCallback(
+    (edgeId: string, patch: Partial<FlowEdgeData>) => {
+      setEdges((existingEdges) =>
+        existingEdges.map((edge) =>
+          edge.id === edgeId
+            ? {
+                ...edge,
+                data: {
+                  ...(edge.data as FlowEdgeData | undefined),
+                  ...patch,
+                },
+              }
+            : edge,
+        ),
+      );
+      markDirty();
+    },
+    [setEdges, markDirty],
   );
 
   const handleUpdateNode = useCallback(
@@ -324,6 +399,8 @@ export default function GraphEditor() {
   const selectedNodeIds = new Set(
     nodes.filter((n) => n.selected).map((n) => n.id),
   );
+  const editingEdge =
+    edges.find((edge) => edge.id === editingEdgeId) ?? null;
   const editingNode =
     nodes.find((node) => node.id === editingNodeId) ?? null;
 
@@ -344,6 +421,8 @@ export default function GraphEditor() {
       <ControlBar
         title="Strategy graph editor"
         subtitle={`${nodes.length} nodes and ${edges.length} edges in the current working graph.`}
+        homeLabel="Back home"
+        onHomeReturn={() => router.push("/home")}
         fileActions={[
           { label: "Import soon", disabled: true, tone: "muted" },
           { label: "Export soon", disabled: true, tone: "muted" },
@@ -376,16 +455,21 @@ export default function GraphEditor() {
         <GraphCanvas
           nodes={nodes}
           edges={edges}
+          edgeTypes={edgeTypes}
           nodeTypes={nodeTypes}
+          editingEdge={editingEdge}
           editingNode={editingNode}
           onNodesChange={onNodesChangeWithDirty}
           onEdgesChange={onEdgesChangeWithDirty}
           onConnect={onConnect}
           onAddNodeAtPosition={handleAddNode}
+          onEditEdge={handleOpenEdgeEditor}
           onEditNode={handleOpenNodeEditor}
           onDuplicateNode={handleDuplicateNode}
           onDeleteNode={handleDeleteNode}
           onCloseInspector={() => setEditingNodeId(null)}
+          onCloseEdgeInspector={() => setEditingEdgeId(null)}
+          onChangeEdge={handleUpdateEdge}
           onChangeNode={handleUpdateNode}
         />
       </div>

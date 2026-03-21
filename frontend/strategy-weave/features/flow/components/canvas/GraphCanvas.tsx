@@ -8,6 +8,7 @@ import ReactFlow, {
   useReactFlow,
   type Connection,
   type Edge,
+  type EdgeTypes,
   type EdgeChange,
   type Node,
   type NodeChange,
@@ -16,9 +17,10 @@ import ReactFlow, {
 
 import "reactflow/dist/style.css";
 
-import type { FlowNodeData } from "@/lib/graphConvert";
+import type { FlowEdgeData, FlowNodeData } from "@/lib/graphConvert";
 import CanvasContextMenu from "../context_menu/CanvasContextMenu";
 import NodeContextMenu from "../context_menu/NodeContextMenu";
+import EdgeInspector from "../inspector/EdgeInspector";
 import NodeInspector from "../inspector/NodeInspector";
 
 function CanvasHelpers({
@@ -51,16 +53,21 @@ export interface GraphCanvasProps {
   subtitle?: string;
   nodes: Node[];
   edges: Edge[];
+  edgeTypes?: EdgeTypes;
   nodeTypes: NodeTypes;
+  editingEdge: Edge<FlowEdgeData> | null;
   editingNode: Node<FlowNodeData> | null;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   onAddNodeAtPosition: (position?: { x: number; y: number }) => void;
+  onEditEdge: (edgeId: string) => void;
   onEditNode: (nodeId: string) => void;
   onDuplicateNode: (node: Node) => void;
   onDeleteNode: (node: Node) => void;
   onCloseInspector: () => void;
+  onCloseEdgeInspector: () => void;
+  onChangeEdge: (edgeId: string, patch: Partial<FlowEdgeData>) => void;
   onChangeNode: (
     nodeId: string,
     patch: Partial<Pick<FlowNodeData, "label" | "details" | "nodeType">>,
@@ -72,16 +79,21 @@ export default function GraphCanvas({
   subtitle = "Right-click to add nodes, connect branches, and inspect graph details.",
   nodes,
   edges,
+  edgeTypes,
   nodeTypes,
+  editingEdge,
   editingNode,
   onNodesChange,
   onEdgesChange,
   onConnect,
   onAddNodeAtPosition,
+  onEditEdge,
   onEditNode,
   onDuplicateNode,
   onDeleteNode,
   onCloseInspector,
+  onCloseEdgeInspector,
+  onChangeEdge,
   onChangeNode,
 }: GraphCanvasProps) {
   const [canvasMenu, setCanvasMenu] = useState<{ x: number; y: number } | null>(null);
@@ -129,6 +141,7 @@ export default function GraphCanvas({
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          edgeTypes={edgeTypes}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
@@ -143,6 +156,7 @@ export default function GraphCanvas({
             setNodeMenu({ node, x: event.clientX, y: event.clientY });
             setCanvasMenu(null);
           }}
+          onEdgeClick={(_, edge) => onEditEdge(edge.id)}
           fitView
         >
           <CanvasHelpers
@@ -189,6 +203,12 @@ export default function GraphCanvas({
           node={editingNode}
           onClose={onCloseInspector}
           onChange={onChangeNode}
+        />
+
+        <EdgeInspector
+          edge={editingEdge}
+          onClose={onCloseEdgeInspector}
+          onChange={onChangeEdge}
         />
       </div>
     </main>

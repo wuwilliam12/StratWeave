@@ -4,6 +4,7 @@
 
 import type { Node, Edge } from "reactflow";
 import type { GraphNode, GraphEdge } from "@/types/graph";
+import { CUSTOM_FLOW_EDGE_TYPE } from "@/features/flow/components/edges/edgeTypes";
 
 /**
  * Shape of `node.data` used in the editor.
@@ -20,6 +21,12 @@ export interface FlowNodeData {
   action_id?: string | null;
   athlete_id?: string | null;
   onEdit?: (nodeId: string) => void;
+}
+
+export interface FlowEdgeData {
+  label?: string;
+  probability?: number | null;
+  staminaCost?: number | null;
 }
 
 /* Convert API nodes to React Flow nodes */
@@ -42,6 +49,7 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
 export function toFlowEdges(apiEdges: GraphEdge[]): Edge[] {
   return apiEdges.map((e) => ({
     id: e.id ?? `e-${e.source}-${e.target}`,
+    type: CUSTOM_FLOW_EDGE_TYPE,
     source: e.source,
     target: e.target,
     /**
@@ -52,7 +60,11 @@ export function toFlowEdges(apiEdges: GraphEdge[]): Edge[] {
      *   display and use a dedicated node type (e.g. `edge-label`) to
      *   represent the mini node in React Flow.
      */
-    data: { label: e.label ?? "" },
+    data: {
+      label: e.label ?? "",
+      probability: e.probability ?? null,
+      staminaCost: e.stamina_cost ?? null,
+    } as FlowEdgeData,
   }));
 }
 
@@ -87,6 +99,8 @@ export function toApiEdges(flowEdges: Edge[]): GraphEdge[] {
     target: e.target,
     // Keep a simple string label on the edge itself for now.
     // Mini node / rich label support will be layered on top of this.
-    label: (e.data?.label as string) ?? "",
+    label: ((e.data as FlowEdgeData | undefined)?.label as string) ?? "",
+    probability: (e.data as FlowEdgeData | undefined)?.probability ?? null,
+    stamina_cost: (e.data as FlowEdgeData | undefined)?.staminaCost ?? null,
   }));
 }

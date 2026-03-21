@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import GraphHierarchySkeleton from "@/components/GraphHierarchySkeleton";
+import GraphHierarchySkeleton from "@/features/flow/components/nodes/GraphHierarchySkeleton";
 
 const quickActions = [
   "Create a new strategy graph",
