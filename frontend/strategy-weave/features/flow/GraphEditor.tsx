@@ -269,7 +269,8 @@ export default function GraphEditor() {
             details: "",
             sport: item.sport ?? null,
             action_id: item.action_id ?? null,
-            boxer_id: item.boxer_id ?? null,
+            athlete_id: item.athlete_id ?? null,
+            athleteRole: item.athleteRole ?? "neutral",
             onEdit: handleOpenNodeEditor,
           },
         },
@@ -366,7 +367,12 @@ export default function GraphEditor() {
   const handleUpdateNode = useCallback(
     (
       nodeId: string,
-      patch: Partial<Pick<FlowNodeData, "label" | "details" | "nodeType">>,
+      patch: Partial<
+        Pick<
+          FlowNodeData,
+          "label" | "details" | "nodeType" | "athlete_id" | "athleteRole"
+        >
+      >,
     ) => {
       setNodes((nds) =>
         nds.map((node) =>

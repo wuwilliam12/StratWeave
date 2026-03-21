@@ -13,6 +13,7 @@ export interface GraphNode {
   sport?: string | null;
   action_id?: string | null;
   athlete_id?: string | null;
+  athlete_role?: string | null;
   /** Resolved when fetchGraph({ enrich: true }) */
   action?: Record<string, unknown> | null;
   athlete?: Record<string, unknown> | null;

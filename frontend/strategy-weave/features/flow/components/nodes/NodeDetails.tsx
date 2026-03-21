@@ -18,7 +18,23 @@ export default function NodeDetails({
   const details = data.details?.trim();
   const linkedAction = data.action_id?.trim();
   const linkedAthlete = data.athlete_id?.trim();
-  const hasContext = Boolean(details || linkedAction || linkedAthlete || data.sport);
+  const athleteRoleLabel =
+    data.athleteRole === "user"
+      ? "User athlete"
+      : data.athleteRole === "opponent"
+        ? "Opponent athlete"
+        : data.athleteRole === "neutral"
+          ? "Neutral"
+          : null;
+  const hasContext = Boolean(
+    details || linkedAction || linkedAthlete || data.sport || athleteRoleLabel,
+  );
+  const athleteRoleClassName =
+    data.athleteRole === "user"
+      ? "text-sky-600"
+      : data.athleteRole === "opponent"
+        ? "text-rose-600"
+        : "";
 
   return (
     <>
@@ -45,7 +61,12 @@ export default function NodeDetails({
             <div className="space-y-1 border-t border-slate-200 pt-2 text-[11px] text-slate-500">
               {data.sport ? <div>Sport: {data.sport}</div> : null}
               {linkedAction ? <div>Action ID: {linkedAction}</div> : null}
-              {linkedAthlete ? <div>Boxer ID: {linkedAthlete}</div> : null}
+              {linkedAthlete ? <div>Athlete ID: {linkedAthlete}</div> : null}
+              {athleteRoleLabel ? (
+                <div className={athleteRoleClassName}>
+                  Perspective: {athleteRoleLabel}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>

@@ -5,7 +5,12 @@ import type { Node } from "reactflow";
 import type { FlowNodeData } from "@/lib/graphConvert";
 import { FLOW_NODE_TYPE_OPTIONS } from "../nodes/nodeTypes";
 
-type FlowNodePatch = Partial<Pick<FlowNodeData, "label" | "details" | "nodeType">>;
+type FlowNodePatch = Partial<
+  Pick<
+    FlowNodeData,
+    "label" | "details" | "nodeType" | "athlete_id" | "athleteRole"
+  >
+>;
 
 export interface NodeInspectorProps {
   node: Node<FlowNodeData> | null;
@@ -87,10 +92,43 @@ export default function NodeInspector({
           />
         </label>
 
+        <label className="block text-sm font-medium text-[color:var(--color-foreground)]">
+          Athlete role
+          <select
+            value={data.athleteRole ?? "neutral"}
+            onChange={(event) =>
+              onChange?.(node.id, {
+                athleteRole: event.target.value as FlowNodeData["athleteRole"],
+              })
+            }
+            className="mt-1 w-full rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm outline-none transition focus:border-[color:var(--color-accent)]"
+          >
+            <option value="user">User athlete</option>
+            <option value="opponent">Opponent athlete</option>
+            <option value="neutral">Neutral / shared</option>
+          </select>
+        </label>
+
+        <label className="block text-sm font-medium text-[color:var(--color-foreground)]">
+          Athlete ID
+          <input
+            type="text"
+            value={data.athlete_id ?? ""}
+            onChange={(event) =>
+              onChange?.(node.id, {
+                athlete_id: event.target.value.trim() || null,
+              })
+            }
+            className="mt-1 w-full rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm outline-none transition focus:border-[color:var(--color-accent)]"
+            placeholder="Link this node to an athlete"
+          />
+        </label>
+
         <div className="rounded-2xl border border-black/10 bg-white/55 p-3 text-xs text-[color:var(--color-muted)]">
           <div>Node ID: {node.id}</div>
           <div>Action ID: {data.action_id ?? "none"}</div>
           <div>Athlete ID: {data.athlete_id ?? "none"}</div>
+          <div>Athlete role: {data.athleteRole ?? "neutral"}</div>
         </div>
       </div>
     </aside>

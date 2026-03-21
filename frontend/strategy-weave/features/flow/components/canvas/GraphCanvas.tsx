@@ -70,7 +70,12 @@ export interface GraphCanvasProps {
   onChangeEdge: (edgeId: string, patch: Partial<FlowEdgeData>) => void;
   onChangeNode: (
     nodeId: string,
-    patch: Partial<Pick<FlowNodeData, "label" | "details" | "nodeType">>,
+    patch: Partial<
+      Pick<
+        FlowNodeData,
+        "label" | "details" | "nodeType" | "athlete_id" | "athleteRole"
+      >
+    >,
   ) => void;
 }
 

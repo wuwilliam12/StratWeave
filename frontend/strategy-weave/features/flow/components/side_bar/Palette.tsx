@@ -14,7 +14,8 @@ export type NodePaletteItem = {
   nodeType?: string;
   sport?: string;
   action_id?: string | null;
-  boxer_id?: string | null;
+  athlete_id?: string | null;
+  athleteRole?: "user" | "opponent" | "neutral" | null;
 };
 
 const DEFAULT_ITEMS: NodePaletteItem[] = FLOW_NODE_TYPE_OPTIONS.map((option) => ({
@@ -50,7 +51,8 @@ export default function Palette({
     nodeType: "action",
     sport: "boxing",
     action_id: action.id ?? null,
-    boxer_id: null,
+    athlete_id: null,
+    athleteRole: "neutral",
   }));
 
   const allItems = [...items, ...actionItems];

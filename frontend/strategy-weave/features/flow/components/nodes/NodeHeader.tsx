@@ -6,22 +6,46 @@ import type { FlowNodeTypeOption } from "./nodeConstants";
 
 export interface NodeHeaderProps {
   label?: string | null;
+  athleteRole?: "user" | "opponent" | "neutral" | null;
   typeOption: FlowNodeTypeOption;
   onEdit?: () => void;
 }
 
 export default function NodeHeader({
   label,
+  athleteRole,
   typeOption,
   onEdit,
 }: NodeHeaderProps) {
+  const roleBadge =
+    athleteRole === "user"
+      ? {
+          label: "User",
+          className: "bg-sky-100 text-sky-700 border border-sky-200",
+        }
+      : athleteRole === "opponent"
+        ? {
+            label: "Opponent",
+            className: "bg-rose-100 text-rose-700 border border-rose-200",
+          }
+        : null;
+
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <div
-          className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${typeOption.tone.chip}`}
-        >
-          {typeOption.label}
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${typeOption.tone.chip}`}
+          >
+            {typeOption.label}
+          </div>
+          {roleBadge ? (
+            <div
+              className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${roleBadge.className}`}
+            >
+              {roleBadge.label}
+            </div>
+          ) : null}
         </div>
         <div className="mt-2 break-words text-sm font-semibold leading-5">
           {label?.trim() || "Untitled node"}

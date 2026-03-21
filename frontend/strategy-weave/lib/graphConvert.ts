@@ -20,6 +20,7 @@ export interface FlowNodeData {
   sport?: string | null;
   action_id?: string | null;
   athlete_id?: string | null;
+  athleteRole?: "user" | "opponent" | "neutral" | null;
   onEdit?: (nodeId: string) => void;
 }
 
@@ -41,6 +42,12 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
       sport: n.sport ?? null,
       action_id: n.action_id ?? null,
       athlete_id: n.athlete_id ?? null,
+      athleteRole:
+        n.athlete_role === "user" ||
+        n.athlete_role === "opponent" ||
+        n.athlete_role === "neutral"
+          ? n.athlete_role
+          : null,
     } as FlowNodeData,
   }));
 }
@@ -87,6 +94,7 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
       sport: data.sport ?? null,
       action_id: data.action_id ?? null,
       athlete_id: data.athlete_id ?? null,
+      athlete_role: data.athleteRole ?? null,
     };
   });
 }
