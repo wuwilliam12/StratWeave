@@ -4,6 +4,7 @@
 
 import type { Node, Edge } from "reactflow";
 import type { GraphNode, GraphEdge } from "@/types/graph";
+import { CUSTOM_FLOW_EDGE_TYPE } from "@/features/flow/components/edges/edgeTypes";
 
 /**
  * Shape of `node.data` used in the editor.
@@ -16,9 +17,18 @@ export interface FlowNodeData {
   details?: string;
   nodeType?: string | null;
   strategy_id?: string | null;
+  parentId?: string | null;
   sport?: string | null;
   action_id?: string | null;
-  boxer_id?: string | null;
+  athlete_id?: string | null;
+  athleteRole?: "user" | "opponent" | "neutral" | null;
+  onEdit?: (nodeId: string) => void;
+}
+
+export interface FlowEdgeData {
+  label?: string;
+  probability?: number | null;
+  staminaCost?: number | null;
 }
 
 /* Convert API nodes to React Flow nodes */
@@ -30,9 +40,16 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
       label: n.label,
       nodeType: n.node_type ?? "node",
       strategy_id: n.strategy_id ?? null,
+      parentId: n.parent_id ?? null,
       sport: n.sport ?? null,
       action_id: n.action_id ?? null,
-      boxer_id: n.boxer_id ?? null,
+      athlete_id: n.athlete_id ?? null,
+      athleteRole:
+        n.athlete_role === "user" ||
+        n.athlete_role === "opponent" ||
+        n.athlete_role === "neutral"
+          ? n.athlete_role
+          : null,
     } as FlowNodeData,
   }));
 }
@@ -41,6 +58,7 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
 export function toFlowEdges(apiEdges: GraphEdge[]): Edge[] {
   return apiEdges.map((e) => ({
     id: e.id ?? `e-${e.source}-${e.target}`,
+    type: CUSTOM_FLOW_EDGE_TYPE,
     source: e.source,
     target: e.target,
     /**
@@ -51,7 +69,11 @@ export function toFlowEdges(apiEdges: GraphEdge[]): Edge[] {
      *   display and use a dedicated node type (e.g. `edge-label`) to
      *   represent the mini node in React Flow.
      */
-    data: { label: e.label ?? "" },
+    data: {
+      label: e.label ?? "",
+      probability: e.probability ?? null,
+      staminaCost: e.stamina_cost ?? null,
+    } as FlowEdgeData,
   }));
 }
 
@@ -71,9 +93,11 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
       // Keep hierarchy type on the node so Explorer and future views stay aligned.
       node_type: data.nodeType ?? "node",
       strategy_id: data.strategy_id ?? null,
+      parent_id: data.parentId ?? null,
       sport: data.sport ?? null,
       action_id: data.action_id ?? null,
-      boxer_id: data.boxer_id ?? null,
+      athlete_id: data.athlete_id ?? null,
+      athlete_role: data.athleteRole ?? null,
     };
   });
 }
@@ -86,6 +110,8 @@ export function toApiEdges(flowEdges: Edge[]): GraphEdge[] {
     target: e.target,
     // Keep a simple string label on the edge itself for now.
     // Mini node / rich label support will be layered on top of this.
-    label: (e.data?.label as string) ?? "",
+    label: ((e.data as FlowEdgeData | undefined)?.label as string) ?? "",
+    probability: (e.data as FlowEdgeData | undefined)?.probability ?? undefined,
+    stamina_cost: (e.data as FlowEdgeData | undefined)?.staminaCost ?? undefined,
   }));
 }

@@ -12,6 +12,7 @@ def _to_pydantic(m: NodeModel) -> Node:
     return Node(
         id=m.id,
         strategy_id=m.strategy_id,
+        parent_id=m.parent_id,
         label=m.label,
         sport=getattr(m, "sport", None),
         action_id=m.action_id,
@@ -48,6 +49,7 @@ def create_node(node: Node, db: Session = Depends(get_db)):
     m = NodeModel(
         id=nid,
         strategy_id=node.strategy_id,
+        parent_id=node.parent_id,
         label=node.label,
         sport=getattr(node, "sport", None),
         action_id=node.action_id,

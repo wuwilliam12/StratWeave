@@ -8,6 +8,18 @@ import { GRAPH_HIERARCHY_LEVELS } from "@/lib/graphHierarchy";
 export default function GraphHierarchySkeleton() {
   const [strategyLevel, scenarioLevel, sequenceLevel, nodeLevel] =
     GRAPH_HIERARCHY_LEVELS;
+  const flowConnections = [
+    {
+      title: "Entry node -> Decision node",
+      helper: "A flow connection can own follow-up sub nodes.",
+      subNodes: ["Option A", "Option B"],
+    },
+    {
+      title: "Decision node -> Outcome node",
+      helper: "Each branch can expose a smaller chain beneath it.",
+      subNodes: ["Counter", "Recovery"],
+    },
+  ];
 
   return (
     <div className="rounded-[2rem] border border-border bg-surface px-6 py-6 shadow-[0_20px_60px_rgba(0,0,0,0.06)] backdrop-blur">
@@ -42,17 +54,31 @@ export default function GraphHierarchySkeleton() {
                 <div className="text-sm font-medium">{sequenceLevel.label}</div>
                 <div className="mt-1 text-sm text-muted">{sequenceLevel.helper}</div>
 
-                {/* Atomic nodes: smallest units the graph editor can manipulate directly. */}
-                <div className="mt-4 grid gap-2 border-l border-border pl-4">
-                  <div className="rounded-xl border border-dashed border-border bg-surface px-3 py-3 text-sm">
-                    {nodeLevel.label}
-                  </div>
-                  <div className="rounded-xl border border-dashed border-border bg-surface px-3 py-3 text-sm">
-                    {nodeLevel.label}
-                  </div>
-                  <div className="rounded-xl border border-dashed border-border bg-surface px-3 py-3 text-sm">
-                    {nodeLevel.label}
-                  </div>
+                {/* Flow-level connections can branch into their own sub nodes. */}
+                <div className="mt-4 space-y-3 border-l border-border pl-4">
+                  {flowConnections.map((connection) => (
+                    <div
+                      key={connection.title}
+                      className="rounded-xl border border-border bg-surface p-4"
+                    >
+                      <div className="text-sm font-medium">{connection.title}</div>
+                      <div className="mt-1 text-sm text-muted">
+                        {connection.helper}
+                      </div>
+
+                      {/* Atomic nodes: smallest units the graph editor can manipulate directly. */}
+                      <div className="mt-3 grid gap-2 border-l border-border pl-4">
+                        {connection.subNodes.map((subNode) => (
+                          <div
+                            key={subNode}
+                            className="rounded-xl border border-dashed border-border bg-background/80 px-3 py-3 text-sm"
+                          >
+                            {nodeLevel.label}: {subNode}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

@@ -3,6 +3,7 @@
  */
 
 import type { GraphPayload } from "@/types/graph";
+import type { BlueprintStyle } from "@/types/blueprint";
 
 const API_BASE =
   typeof window !== "undefined"
@@ -45,6 +46,17 @@ export async function saveGraph(payload: GraphPayload): Promise<GraphPayload> {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+/* Blueprint style API calls */
+export async function fetchBlueprintStyles(): Promise<BlueprintStyle[]> {
+  return fetchApi<BlueprintStyle[]>("/blueprints/styles/");
+}
+
+export async function fetchBlueprintStyle(
+  styleSlug: string,
+): Promise<BlueprintStyle> {
+  return fetchApi<BlueprintStyle>(`/blueprints/styles/${styleSlug}`);
 }
 
 /* Boxing API calls */
