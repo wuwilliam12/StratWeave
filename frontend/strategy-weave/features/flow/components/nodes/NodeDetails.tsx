@@ -3,17 +3,20 @@
 import React from "react";
 
 import type { FlowNodeData } from "@/lib/graphConvert";
+import type { GraphHierarchySizing } from "@/lib/graphHierarchy";
 
 export interface NodeDetailsProps {
   expanded: boolean;
   onToggle: () => void;
   data: FlowNodeData;
+  sizing: GraphHierarchySizing;
 }
 
 export default function NodeDetails({
   expanded,
   onToggle,
   data,
+  sizing,
 }: NodeDetailsProps) {
   const details = data.details?.trim();
   const linkedAction = data.action_id?.trim();
@@ -38,8 +41,8 @@ export default function NodeDetails({
 
   return (
     <>
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200/80 pt-2">
-        <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500">
+      <div className={`flex items-center justify-between gap-3 border-t border-slate-200/80 ${sizing.sectionSpacing}`}>
+        <div className={`uppercase tracking-[0.16em] text-slate-500 ${sizing.sectionLabelSize}`}>
           {data.sport ? `${data.sport} linked` : "Node details"}
         </div>
         <button
@@ -52,7 +55,7 @@ export default function NodeDetails({
       </div>
 
       {expanded ? (
-        <div className="nodrag nopan mt-2 space-y-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
+        <div className={`nodrag nopan mt-2 space-y-2 rounded-xl bg-slate-50 text-xs text-slate-700 ${sizing.detailsPadding}`}>
           <div className="font-medium text-slate-900">Details</div>
           <div className="whitespace-pre-wrap leading-5 text-slate-600">
             {details || "Add notes, conditions, or response logic from the edit panel."}

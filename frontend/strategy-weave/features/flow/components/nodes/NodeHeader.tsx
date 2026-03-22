@@ -2,12 +2,14 @@
 
 import React from "react";
 
+import type { GraphHierarchySizing } from "@/lib/graphHierarchy";
 import type { FlowNodeTypeOption } from "./nodeConstants";
 
 export interface NodeHeaderProps {
   label?: string | null;
   athleteRole?: "user" | "opponent" | "neutral" | null;
   typeOption: FlowNodeTypeOption;
+  sizing: GraphHierarchySizing;
   onEdit?: () => void;
 }
 
@@ -15,6 +17,7 @@ export default function NodeHeader({
   label,
   athleteRole,
   typeOption,
+  sizing,
   onEdit,
 }: NodeHeaderProps) {
   const roleBadge =
@@ -35,19 +38,19 @@ export default function NodeHeader({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${typeOption.tone.chip}`}
+            className={`inline-flex rounded-full font-semibold uppercase tracking-[0.16em] ${sizing.chipSize} ${typeOption.tone.chip}`}
           >
             {typeOption.label}
           </div>
           {roleBadge ? (
             <div
-              className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${roleBadge.className}`}
+              className={`inline-flex rounded-full font-semibold uppercase tracking-[0.16em] ${sizing.chipSize} ${roleBadge.className}`}
             >
               {roleBadge.label}
             </div>
           ) : null}
         </div>
-        <div className="mt-2 break-words text-sm font-semibold leading-5">
+        <div className={`mt-2 break-words font-semibold ${sizing.titleSize} ${sizing.titleLeading}`}>
           {label?.trim() || "Untitled node"}
         </div>
       </div>
