@@ -25,6 +25,7 @@ const DEFAULT_ITEMS: NodePaletteItem[] = FLOW_NODE_TYPE_OPTIONS.map((option) => 
 }));
 
 export interface PaletteProps {
+  title?: string | null;
   items?: NodePaletteItem[];
   onSelect?: (item: NodePaletteItem) => void;
   onDragStart?: (item: NodePaletteItem) => void;
@@ -32,6 +33,7 @@ export interface PaletteProps {
 }
 
 export default function Palette({
+  title = "Add node",
   items = DEFAULT_ITEMS,
   onSelect,
   includeBoxingActions = true,
@@ -59,10 +61,12 @@ export default function Palette({
 
   return (
     <div className="flex flex-col gap-1 bg-transparent p-2">
-      <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        Add node
-      </h3>
-      <ul className="flex flex-col gap-0.5" role="listbox">
+      {title ? (
+        <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          {title}
+        </h3>
+      ) : null}
+      <ul className="scrollbar-none flex flex-col gap-0.5 overflow-y-auto" role="listbox">
         {allItems.map((item) => (
           <li key={item.id}>
             <button
