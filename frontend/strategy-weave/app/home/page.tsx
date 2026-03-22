@@ -1,4 +1,5 @@
 import Navbar from "@/components/Navbar";
+import BlueprintStyleLibrary from "@/features/blueprints/components/BlueprintStyleLibrary";
 import GraphHierarchySkeleton from "@/features/flow/components/nodes/GraphHierarchySkeleton";
 
 const quickActions = [
@@ -81,6 +82,7 @@ export default function HomePage() {
             </div>
 
             <GraphHierarchySkeleton />
+            <BlueprintStyleLibrary />
           </div>
 
           {/* Right rail is reserved for fast actions and lighter supporting content. */}
