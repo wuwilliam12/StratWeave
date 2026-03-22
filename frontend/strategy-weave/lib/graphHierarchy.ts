@@ -37,6 +37,8 @@ type FlowNodeShape = {
   label?: string;
   nodeType?: string | null;
   node_type?: string | null;
+  parentId?: string | null;
+  parent_id?: string | null;
 };
 
 export function normalizeGraphHierarchyType(
@@ -65,4 +67,9 @@ export function getNodeHierarchyType(node: Node): GraphHierarchyLevelKey {
 export function getNodeHierarchyLabel(node: Node): string {
   const data = (node.data ?? {}) as FlowNodeShape;
   return data.label?.trim() || node.id;
+}
+
+export function getNodeParentId(node: Node): string | null {
+  const data = (node.data ?? {}) as FlowNodeShape;
+  return data.parentId ?? data.parent_id ?? null;
 }

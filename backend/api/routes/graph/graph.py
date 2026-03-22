@@ -30,6 +30,7 @@ def _node_to_pydantic(m: NodeModel) -> Node:
     return Node(
         id=m.id,
         strategy_id=m.strategy_id,
+        parent_id=m.parent_id,
         label=m.label,
         sport=getattr(m, "sport", None),
         action_id=m.action_id,
@@ -115,6 +116,7 @@ def save_graph(payload: GraphPayload, db: Session = Depends(get_db)):
         db.add(NodeModel(
             id=nid,
             strategy_id=n.strategy_id,
+            parent_id=n.parent_id,
             label=n.label,
             sport=getattr(n, "sport", None),
             action_id=n.action_id,

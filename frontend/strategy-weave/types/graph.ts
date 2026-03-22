@@ -10,6 +10,7 @@ export interface GraphNode {
   position_y: number;
   node_type?: string;
   strategy_id?: string | null;
+  parent_id?: string | null;
   sport?: string | null;
   action_id?: string | null;
   athlete_id?: string | null;

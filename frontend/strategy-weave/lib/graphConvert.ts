@@ -17,6 +17,7 @@ export interface FlowNodeData {
   details?: string;
   nodeType?: string | null;
   strategy_id?: string | null;
+  parentId?: string | null;
   sport?: string | null;
   action_id?: string | null;
   athlete_id?: string | null;
@@ -39,6 +40,7 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
       label: n.label,
       nodeType: n.node_type ?? "node",
       strategy_id: n.strategy_id ?? null,
+      parentId: n.parent_id ?? null,
       sport: n.sport ?? null,
       action_id: n.action_id ?? null,
       athlete_id: n.athlete_id ?? null,
@@ -91,6 +93,7 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
       // Keep hierarchy type on the node so Explorer and future views stay aligned.
       node_type: data.nodeType ?? "node",
       strategy_id: data.strategy_id ?? null,
+      parent_id: data.parentId ?? null,
       sport: data.sport ?? null,
       action_id: data.action_id ?? null,
       athlete_id: data.athlete_id ?? null,

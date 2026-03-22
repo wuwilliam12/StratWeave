@@ -52,6 +52,7 @@ export interface GraphCanvasProps {
   title?: string;
   subtitle?: string;
   nodes: Node[];
+  allNodes?: Node[];
   edges: Edge[];
   edgeTypes?: EdgeTypes;
   nodeTypes: NodeTypes;
@@ -73,7 +74,7 @@ export interface GraphCanvasProps {
     patch: Partial<
       Pick<
         FlowNodeData,
-        "label" | "details" | "nodeType" | "athlete_id" | "athleteRole"
+        "label" | "details" | "nodeType" | "athlete_id" | "athleteRole" | "parentId"
       >
     >,
   ) => void;
@@ -83,6 +84,7 @@ export default function GraphCanvas({
   title = "Canvas",
   subtitle = "Right-click to add nodes, connect branches, and inspect graph details.",
   nodes,
+  allNodes,
   edges,
   edgeTypes,
   nodeTypes,
@@ -206,6 +208,7 @@ export default function GraphCanvas({
 
         <NodeInspector
           node={editingNode}
+          nodes={allNodes ?? nodes}
           onClose={onCloseInspector}
           onChange={onChangeNode}
         />

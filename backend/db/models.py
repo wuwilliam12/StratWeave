@@ -15,6 +15,7 @@ class NodeModel(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     strategy_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    parent_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     label: Mapped[str] = mapped_column(Text, nullable=False)
     sport: Mapped[str | None] = mapped_column(String(32), nullable=True)
     action_id: Mapped[str | None] = mapped_column(String(36), nullable=True)

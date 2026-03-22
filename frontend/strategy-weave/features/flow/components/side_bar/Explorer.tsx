@@ -3,9 +3,9 @@
 import React from "react";
 import type { Edge, Node } from "reactflow";
 import {
-  GRAPH_HIERARCHY_LEVELS,
   getNodeHierarchyLabel,
   getNodeHierarchyType,
+  getNodeParentId,
 } from "@/lib/graphHierarchy";
 
 /**
@@ -29,18 +29,77 @@ export default function Explorer({
   search = "",
   onSearchChange,
 }: ExplorerProps) {
-  const filteredNodes =
-    search.trim() === ""
-      ? nodes
-      : nodes.filter((node) => {
-          const label = (node.data?.label as string) ?? "";
-          return label.toLowerCase().includes(search.trim().toLowerCase());
-        });
+  const query = search.trim().toLowerCase();
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const childrenByParentId = new Map<string | null, Node[]>();
 
-  const hierarchyBuckets = GRAPH_HIERARCHY_LEVELS.map((level) => ({
-    ...level,
-    nodes: filteredNodes.filter((node) => getNodeHierarchyType(node) === level.key),
-  }));
+  for (const node of nodes) {
+    const parentId = getNodeParentId(node);
+    const bucket = childrenByParentId.get(parentId) ?? [];
+    bucket.push(node);
+    childrenByParentId.set(parentId, bucket);
+  }
+
+  const visibleNodeIds = new Set<string>();
+  for (const node of nodes) {
+    const label = getNodeHierarchyLabel(node).toLowerCase();
+    if (query !== "" && !label.includes(query)) continue;
+
+    visibleNodeIds.add(node.id);
+
+    let currentParentId = getNodeParentId(node);
+    while (currentParentId) {
+      visibleNodeIds.add(currentParentId);
+      const parentNode = nodesById.get(currentParentId);
+      if (!parentNode) break;
+      currentParentId = getNodeParentId(parentNode);
+    }
+  }
+
+  const rootNodes = nodes.filter((node) => {
+    const parentId = getNodeParentId(node);
+    return !parentId || !nodesById.has(parentId);
+  });
+
+  const renderTree = (node: Node, depth = 0): React.ReactNode => {
+    if (query !== "" && !visibleNodeIds.has(node.id)) return null;
+
+    const children = (childrenByParentId.get(node.id) ?? [])
+      .filter((child) => child.id !== node.id)
+      .sort((left, right) =>
+        getNodeHierarchyLabel(left).localeCompare(getNodeHierarchyLabel(right)),
+      );
+    const isSelected = selectedNodeIds.has(node.id);
+
+    return (
+      <li key={node.id} className={depth === 0 ? "" : "mt-1"}>
+        <button
+          type="button"
+          onClick={() => onSelectNode?.(node.id)}
+          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-600 ${
+            isSelected ? "bg-gray-200 dark:bg-gray-600" : ""
+          }`}
+          style={{ paddingLeft: `${depth * 14 + 8}px` }}
+        >
+          <span className="truncate">{getNodeHierarchyLabel(node) || "(unnamed)"}</span>
+          <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {getNodeHierarchyType(node)}
+          </span>
+        </button>
+
+        {children.length > 0 && (
+          <ul className="border-l border-gray-200 pl-1 dark:border-gray-700">
+            {children.map((child) => renderTree(child, depth + 1))}
+          </ul>
+        )}
+      </li>
+    );
+  };
+
+  const hasVisibleNodes =
+    query === ""
+      ? rootNodes.length > 0
+      : rootNodes.some((node) => visibleNodeIds.has(node.id));
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-transparent">
@@ -60,53 +119,21 @@ export default function Explorer({
         )}
       </div>
       <ul className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2" role="list">
-        {filteredNodes.length === 0 ? (
+        {!hasVisibleNodes ? (
           <li className="py-2 text-center text-sm text-gray-500">
             {nodes.length === 0 ? "No nodes" : "No matches"}
           </li>
         ) : (
-          hierarchyBuckets.map((bucket, index) => (
-            <li key={bucket.key} className={index === 0 ? "" : "mt-3"}>
-              <div className="rounded border border-gray-200 bg-white/70 px-2 py-2 dark:border-gray-700 dark:bg-gray-900/40">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {bucket.label}
-                </p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {bucket.helper}
-                </p>
-
-                <ul className="mt-2 space-y-1 border-l border-gray-200 pl-2 dark:border-gray-700">
-                  {bucket.nodes.length === 0 ? (
-                    <li className="py-1 text-xs text-gray-400 dark:text-gray-500">
-                      No {bucket.label.toLowerCase()} entries yet.
-                    </li>
-                  ) : (
-                    bucket.nodes.map((node) => {
-                      const isSelected = selectedNodeIds.has(node.id);
-                      return (
-                        <li key={node.id}>
-                          <button
-                            type="button"
-                            onClick={() => onSelectNode?.(node.id)}
-                            className={`w-full rounded px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-600 ${
-                              isSelected ? "bg-gray-200 dark:bg-gray-600" : ""
-                            }`}
-                          >
-                            {getNodeHierarchyLabel(node) || "(unnamed)"}
-                          </button>
-                        </li>
-                      );
-                    })
-                  )}
-                </ul>
-              </div>
-            </li>
-          ))
+          rootNodes
+            .sort((left, right) =>
+              getNodeHierarchyLabel(left).localeCompare(getNodeHierarchyLabel(right)),
+            )
+            .map((node) => renderTree(node))
         )}
       </ul>
       {edges.length > 0 && (
         <div className="border-t border-gray-200 px-2 py-1 text-xs text-gray-500 dark:border-gray-700">
-          {nodes.length} nodes · {edges.length} edges
+          {nodes.length} nodes - {edges.length} edges
         </div>
       )}
     </div>

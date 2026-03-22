@@ -5,6 +5,7 @@ class Node(BaseModel):
     # Categorization
     id: str | None = None
     strategy_id: str | None = None
+    parent_id: str | None = None
     label: str
 
     # Sport context

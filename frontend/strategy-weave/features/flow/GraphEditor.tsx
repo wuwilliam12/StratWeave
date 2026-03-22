@@ -37,19 +37,19 @@ const defaultNodes: Node[] = [
     id: "1",
     type: CUSTOM_FLOW_NODE_TYPE,
     position: { x: 0, y: 0 },
-    data: { label: "Pressure strategy", nodeType: "strategy" },
+    data: { label: "Pressure strategy", nodeType: "strategy", parentId: null },
   },
   {
     id: "2",
     type: CUSTOM_FLOW_NODE_TYPE,
     position: { x: 280, y: 0 },
-    data: { label: "Rope exchange scenario", nodeType: "scenario" },
+    data: { label: "Rope exchange scenario", nodeType: "scenario", parentId: "1" },
   },
   {
     id: "3",
     type: CUSTOM_FLOW_NODE_TYPE,
     position: { x: 140, y: 120 },
-    data: { label: "Jab-slip-counter flow", nodeType: "sequence" },
+    data: { label: "Jab-slip-counter flow", nodeType: "sequence", parentId: "2" },
   },
 ];
 
@@ -80,6 +80,36 @@ const defaultEdges: Edge[] = [
 /** Generates a unique node id. */
 function nextNodeId(): string {
   return `node-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function wouldCreateHierarchyCycle(
+  nodes: Node[],
+  nodeId: string,
+  parentId: string | null | undefined,
+): boolean {
+  if (!parentId || parentId === nodeId) {
+    return parentId === nodeId;
+  }
+
+  const nodesById = new Map(
+    nodes.map((node) => [node.id, (node.data ?? {}) as FlowNodeData]),
+  );
+  const visited = new Set<string>();
+  let currentParentId: string | null | undefined = parentId;
+
+  while (currentParentId) {
+    if (currentParentId === nodeId) {
+      return true;
+    }
+    if (visited.has(currentParentId)) {
+      return true;
+    }
+
+    visited.add(currentParentId);
+    currentParentId = nodesById.get(currentParentId)?.parentId ?? null;
+  }
+
+  return false;
 }
 
 function attachNodeEditor(
@@ -118,6 +148,10 @@ function mergeFrontendNodeData(
         details:
           currentData.details ??
           (node.data as FlowNodeData | undefined)?.details,
+        parentId:
+          currentData.parentId ??
+          (node.data as FlowNodeData | undefined)?.parentId ??
+          null,
       },
     };
   });
@@ -146,6 +180,29 @@ export default function GraphEditor() {
   }, []);
   const nodeTypes = useMemo(() => ({ [CUSTOM_FLOW_NODE_TYPE]: StrategyNode }), []);
   const edgeTypes = useMemo(() => ({ [CUSTOM_FLOW_EDGE_TYPE]: ActionEdgeCard }), []);
+  const getPreferredParentId = useCallback((existingNodes: Node[]) => {
+    const selectedNode = existingNodes.find((node) => node.selected);
+    return selectedNode?.id ?? null;
+  }, []);
+  const detachChildrenFromParents = useCallback(
+    (existingNodes: Node[], removedIds: Set<string>) =>
+      existingNodes.map((node) => {
+        const data = (node.data ?? {}) as FlowNodeData;
+
+        if (!removedIds.has(data.parentId ?? "")) {
+          return node;
+        }
+
+        return {
+          ...node,
+          data: {
+            ...data,
+            parentId: null,
+          },
+        };
+      }),
+    [],
+  );
 
   const onNodesChangeWithDirty = useCallback(
     (changes: NodeChange[]) => {
@@ -241,43 +298,58 @@ export default function GraphEditor() {
 
   const handleAddNode = useCallback(
     (position?: { x: number; y: number }) => {
-      setNodes((nds) => [
-        ...nds,
-        {
-          id: nextNodeId(),
-          type: CUSTOM_FLOW_NODE_TYPE,
-          position: position ?? { x: 150 + nds.length * 30, y: 150 },
-          data: { label: "New node", nodeType: "node", details: "", onEdit: handleOpenNodeEditor },
-        },
-      ]);
+      setNodes((nds) => {
+        const parentId = getPreferredParentId(nds);
+
+        return [
+          ...nds,
+          {
+            id: nextNodeId(),
+            type: CUSTOM_FLOW_NODE_TYPE,
+            position: position ?? { x: 150 + nds.length * 30, y: 150 },
+            data: {
+              label: "New node",
+              nodeType: "node",
+              details: "",
+              parentId,
+              onEdit: handleOpenNodeEditor,
+            },
+          },
+        ];
+      });
       markDirty();
     },
-    [setNodes, markDirty, handleOpenNodeEditor],
+    [setNodes, markDirty, handleOpenNodeEditor, getPreferredParentId],
   );
 
   const handleAddNodeFromPalette = useCallback(
     (item: NodePaletteItem) => {
-      setNodes((nds) => [
-        ...nds,
-        {
-          id: nextNodeId(),
-          type: CUSTOM_FLOW_NODE_TYPE,
-          position: { x: 150 + nds.length * 30, y: 150 },
-          data: {
-            label: item.label,
-            nodeType: item.nodeType,
-            details: "",
-            sport: item.sport ?? null,
-            action_id: item.action_id ?? null,
-            athlete_id: item.athlete_id ?? null,
-            athleteRole: item.athleteRole ?? "neutral",
-            onEdit: handleOpenNodeEditor,
+      setNodes((nds) => {
+        const parentId = getPreferredParentId(nds);
+
+        return [
+          ...nds,
+          {
+            id: nextNodeId(),
+            type: CUSTOM_FLOW_NODE_TYPE,
+            position: { x: 150 + nds.length * 30, y: 150 },
+            data: {
+              label: item.label,
+              nodeType: item.nodeType,
+              details: "",
+              parentId,
+              sport: item.sport ?? null,
+              action_id: item.action_id ?? null,
+              athlete_id: item.athlete_id ?? null,
+              athleteRole: item.athleteRole ?? "neutral",
+              onEdit: handleOpenNodeEditor,
+            },
           },
-        },
-      ]);
+        ];
+      });
       markDirty();
     },
-    [setNodes, markDirty, handleOpenNodeEditor],
+    [setNodes, markDirty, handleOpenNodeEditor, getPreferredParentId],
   );
 
   const handleDeleteSelected = useCallback(() => {
@@ -294,14 +366,17 @@ export default function GraphEditor() {
         current && deletedNodeIds.has(current) ? null : current,
       );
 
-      return nds.filter((node) => !node.selected);
+      return detachChildrenFromParents(
+        nds.filter((node) => !node.selected),
+        deletedNodeIds,
+      );
     });
     setEdges((eds) => eds.filter((e) => !e.selected));
     setEditingEdgeId((current) =>
       current && selectedEdgeIds.has(current) ? null : current,
     );
     markDirty();
-  }, [setNodes, setEdges, markDirty, edges]);
+  }, [setNodes, setEdges, markDirty, edges, detachChildrenFromParents]);
 
   const handleDuplicateNode = useCallback(
     (node: Node) => {
@@ -331,7 +406,12 @@ export default function GraphEditor() {
           .map((edge) => edge.id),
       );
 
-      setNodes((nds) => nds.filter((n) => n.id !== node.id));
+      setNodes((nds) =>
+        detachChildrenFromParents(
+          nds.filter((n) => n.id !== node.id),
+          new Set([node.id]),
+        ),
+      );
       setEdges((eds) =>
         eds.filter((e) => e.source !== node.id && e.target !== node.id),
       );
@@ -341,7 +421,7 @@ export default function GraphEditor() {
       setEditingNodeId((current) => (current === node.id ? null : current));
       markDirty();
     },
-    [setNodes, setEdges, markDirty, edges],
+    [setNodes, setEdges, markDirty, edges, detachChildrenFromParents],
   );
 
   const handleUpdateEdge = useCallback(
@@ -370,21 +450,31 @@ export default function GraphEditor() {
       patch: Partial<
         Pick<
           FlowNodeData,
-          "label" | "details" | "nodeType" | "athlete_id" | "athleteRole"
+          "label" | "details" | "nodeType" | "athlete_id" | "athleteRole" | "parentId"
         >
       >,
     ) => {
       setNodes((nds) =>
         nds.map((node) =>
           node.id === nodeId
-            ? {
-                ...node,
-                data: {
-                  ...(node.data as FlowNodeData),
-                  ...patch,
-                  onEdit: handleOpenNodeEditor,
-                },
-              }
+            ? (() => {
+                const nextParentId =
+                  patch.parentId !== undefined
+                    ? wouldCreateHierarchyCycle(nds, nodeId, patch.parentId)
+                      ? (node.data as FlowNodeData).parentId ?? null
+                      : patch.parentId
+                    : (node.data as FlowNodeData).parentId ?? null;
+
+                return {
+                  ...node,
+                  data: {
+                    ...(node.data as FlowNodeData),
+                    ...patch,
+                    parentId: nextParentId,
+                    onEdit: handleOpenNodeEditor,
+                  },
+                };
+              })()
             : node,
         ),
       );
@@ -460,6 +550,7 @@ export default function GraphEditor() {
 
         <GraphCanvas
           nodes={nodes}
+          allNodes={nodes}
           edges={edges}
           edgeTypes={edgeTypes}
           nodeTypes={nodeTypes}

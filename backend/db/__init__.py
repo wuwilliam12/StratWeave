@@ -29,11 +29,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def create_tables():
     """Create all tables. Call on app startup."""
     Base.metadata.create_all(bind=engine)
-    _migrate_add_sport_column()
+    _migrate_add_node_columns()
 
 
-def _migrate_add_sport_column():
-    """Add sport column to nodes if it doesn't exist (for existing DBs)."""
+def _migrate_add_node_columns():
+    """Add newly introduced node columns if they don't exist yet."""
     from sqlalchemy import text
 
     try:
@@ -41,8 +41,11 @@ def _migrate_add_sport_column():
             if conn.dialect.name == "sqlite":
                 r = conn.execute(text("PRAGMA table_info(nodes)"))
                 cols = [row[1] for row in r.fetchall()]
-                if cols and "sport" not in cols:
-                    conn.execute(text("ALTER TABLE nodes ADD COLUMN sport VARCHAR(32)"))
+                if cols:
+                    if "sport" not in cols:
+                        conn.execute(text("ALTER TABLE nodes ADD COLUMN sport VARCHAR(32)"))
+                    if "parent_id" not in cols:
+                        conn.execute(text("ALTER TABLE nodes ADD COLUMN parent_id VARCHAR(36)"))
                     conn.commit()
     except Exception:
         pass  # Table may not exist yet or migration already applied

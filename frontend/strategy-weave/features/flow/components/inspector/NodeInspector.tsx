@@ -3,17 +3,19 @@
 import React from "react";
 import type { Node } from "reactflow";
 import type { FlowNodeData } from "@/lib/graphConvert";
+import { getNodeHierarchyLabel, getNodeParentId } from "@/lib/graphHierarchy";
 import { FLOW_NODE_TYPE_OPTIONS } from "../nodes/nodeTypes";
 
 type FlowNodePatch = Partial<
   Pick<
     FlowNodeData,
-    "label" | "details" | "nodeType" | "athlete_id" | "athleteRole"
+    "label" | "details" | "nodeType" | "athlete_id" | "athleteRole" | "parentId"
   >
 >;
 
 export interface NodeInspectorProps {
   node: Node<FlowNodeData> | null;
+  nodes?: Node<FlowNodeData>[];
   onClose?: () => void;
   onChange?: (nodeId: string, patch: FlowNodePatch) => void;
 }
@@ -22,12 +24,35 @@ export type NodeEditorPanelProps = NodeInspectorProps;
 
 export default function NodeInspector({
   node,
+  nodes = [],
   onClose,
   onChange,
 }: NodeInspectorProps) {
   if (!node) return null;
 
   const data = (node.data ?? {}) as FlowNodeData;
+  const wouldCreateCycle = (candidateId: string) => {
+    let currentParentId: string | null = candidateId;
+    const visited = new Set<string>();
+
+    while (currentParentId) {
+      if (currentParentId === node.id) {
+        return true;
+      }
+      if (visited.has(currentParentId)) {
+        return true;
+      }
+
+      visited.add(currentParentId);
+      const parentNode = nodes.find((candidate) => candidate.id === currentParentId);
+      currentParentId = parentNode ? getNodeParentId(parentNode) : null;
+    }
+
+    return false;
+  };
+  const parentOptions = nodes.filter(
+    (candidate) => candidate.id !== node.id && !wouldCreateCycle(candidate.id),
+  );
 
   return (
     <aside className="absolute right-4 top-4 z-30 w-[320px] rounded-3xl border border-black/10 bg-[color:var(--color-surface-strong)] p-4 shadow-2xl backdrop-blur">
@@ -80,6 +105,24 @@ export default function NodeInspector({
         </label>
 
         <label className="block text-sm font-medium text-[color:var(--color-foreground)]">
+          Parent
+          <select
+            value={data.parentId ?? ""}
+            onChange={(event) =>
+              onChange?.(node.id, { parentId: event.target.value || null })
+            }
+            className="mt-1 w-full rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm outline-none transition focus:border-[color:var(--color-accent)]"
+          >
+            <option value="">No parent (root)</option>
+            {parentOptions.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {getNodeHierarchyLabel(candidate)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block text-sm font-medium text-[color:var(--color-foreground)]">
           Details
           <textarea
             value={data.details ?? ""}
@@ -126,6 +169,7 @@ export default function NodeInspector({
 
         <div className="rounded-2xl border border-black/10 bg-white/55 p-3 text-xs text-[color:var(--color-muted)]">
           <div>Node ID: {node.id}</div>
+          <div>Parent ID: {data.parentId ?? "none"}</div>
           <div>Action ID: {data.action_id ?? "none"}</div>
           <div>Athlete ID: {data.athlete_id ?? "none"}</div>
           <div>Athlete role: {data.athleteRole ?? "neutral"}</div>
