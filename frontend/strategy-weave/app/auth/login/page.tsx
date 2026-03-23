@@ -2,17 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const response = await fetch("http://localhost:8000/api/auth/token", {
@@ -29,14 +28,15 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.access_token);
+        toast.success("Login successful!");
         // Redirect to home or dashboard
         window.location.href = "/home";
       } else {
         const errorData = await response.json();
-        setError(errorData.detail || "Login failed");
+        toast.error(errorData.detail || "Login failed");
       }
     } catch (err) {
-      setError("Network error");
+      toast.error("Network error");
     } finally {
       setLoading(false);
     }
@@ -83,10 +83,6 @@ export default function LoginPage() {
               />
             </div>
           </div>
-
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
 
           <div>
             <button

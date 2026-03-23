@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -9,15 +10,13 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       setLoading(false);
       return;
     }
@@ -36,14 +35,15 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
+        toast.success("Registration successful! Please log in.");
         // Redirect to login
         window.location.href = "/auth/login";
       } else {
         const errorData = await response.json();
-        setError(errorData.detail || "Registration failed");
+        toast.error(errorData.detail || "Registration failed");
       }
     } catch (err) {
-      setError("Network error");
+      toast.error("Network error");
     } finally {
       setLoading(false);
     }
@@ -120,10 +120,6 @@ export default function RegisterPage() {
               />
             </div>
           </div>
-
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
 
           <div>
             <button
