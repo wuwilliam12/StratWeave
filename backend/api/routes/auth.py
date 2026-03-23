@@ -32,6 +32,18 @@ class UserResponse(BaseModel):
     username: str
     email: str
 
+class UserPublic(BaseModel):
+    id: int
+    username: str
+    email: str
+    # Placeholder fields for future implementation
+    bio: str | None = None
+    credentials: str | None = None
+    join_date: str | None = None
+    last_active: str | None = None
+    total_graphs: int = 0
+    public_graphs: int = 0
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -120,6 +132,53 @@ async def login_for_access_token(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@router.put("/users/me", response_model=UserResponse)
+async def update_user_me(
+    user_update: UserCreate,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    # Update user fields
+    if user_update.username and user_update.username != current_user.username:
+        # Check if username is taken
+        existing = db.query(User).filter(User.username == user_update.username).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        current_user.username = user_update.username
+    
+    if user_update.email and user_update.email != current_user.email:
+        # Check if email is taken
+        existing = db.query(User).filter(User.email == user_update.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        current_user.email = user_update.email
+    
+    if user_update.password:
+        current_user.hashed_password = get_password_hash(user_update.password)
+    
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 @router.get("/users/me", response_model=UserResponse)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
+
+@router.get("/users/{username}", response_model=UserPublic)
+def read_user_public(username: str, db: Session = Depends(get_db)):
+    user = get_user(db, username=username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Placeholder data - in real implementation, these would come from database
+    return UserPublic(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        bio="Experienced boxing strategist and coach with 10+ years in the sport.",
+        credentials="Certified Boxing Coach, Former Professional Fighter",
+        join_date="2024-01-15",
+        last_active="2024-03-22",
+        total_graphs=12,
+        public_graphs=8
+    )
