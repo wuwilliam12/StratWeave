@@ -17,5 +17,6 @@ class Node(BaseModel):
 
     position_x: float = 0
     position_y: float = 0
+    graph_id: str | None = None
 
     node_type: str

@@ -33,20 +33,28 @@ def create_tables():
 
 
 def _migrate_add_node_columns():
-    """Add newly introduced node columns if they don't exist yet."""
+    """Add newly introduced node/edge columns if they don't exist yet."""
     from sqlalchemy import text
 
     try:
         with engine.connect() as conn:
             if conn.dialect.name == "sqlite":
                 r = conn.execute(text("PRAGMA table_info(nodes)"))
-                cols = [row[1] for row in r.fetchall()]
-                if cols:
-                    if "sport" not in cols:
+                node_cols = [row[1] for row in r.fetchall()]
+                if node_cols:
+                    if "sport" not in node_cols:
                         conn.execute(text("ALTER TABLE nodes ADD COLUMN sport VARCHAR(32)"))
-                    if "parent_id" not in cols:
+                    if "parent_id" not in node_cols:
                         conn.execute(text("ALTER TABLE nodes ADD COLUMN parent_id VARCHAR(36)"))
-                    conn.commit()
+                    if "graph_id" not in node_cols:
+                        conn.execute(text("ALTER TABLE nodes ADD COLUMN graph_id VARCHAR(36)"))
+
+                r = conn.execute(text("PRAGMA table_info(edges)"))
+                edge_cols = [row[1] for row in r.fetchall()]
+                if edge_cols and "graph_id" not in edge_cols:
+                    conn.execute(text("ALTER TABLE edges ADD COLUMN graph_id VARCHAR(36)"))
+
+                conn.commit()
     except Exception:
         pass  # Table may not exist yet or migration already applied
 
