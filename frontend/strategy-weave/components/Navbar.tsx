@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 type NavItem = {
@@ -22,6 +25,16 @@ export default function Navbar({
   primaryAction = { href: "/graph_editor", label: "Open editor" },
   secondaryAction = { href: "/home", label: "View home" },
 }: NavbarProps) {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const loggedInNavItems = isLoggedIn
+    ? [...navItems, { href: "/profile", label: "Profile" }]
+    : navItems;
   return (
     // Shared top-level nav shell for marketing and app-facing pages.
     <header className="rounded-[1.75rem] border border-border bg-surface px-5 py-4 shadow-[0_18px_60px_rgba(0,0,0,0.08)] backdrop-blur">
@@ -41,7 +54,7 @@ export default function Navbar({
             aria-label="Primary"
             className="flex flex-wrap items-center gap-2 text-sm font-medium"
           >
-            {navItems.map((item) => (
+            {loggedInNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -50,6 +63,14 @@ export default function Navbar({
                 {item.label}
               </Link>
             ))}
+            {!isLoggedIn && (
+              <Link
+                href="/auth/login"
+                className="rounded-full border border-border px-4 py-2 transition hover:bg-surface-strong"
+              >
+                Login
+              </Link>
+            )}
           </nav>
 
           {/* Action slots let each page swap in its own primary CTA pair. */}

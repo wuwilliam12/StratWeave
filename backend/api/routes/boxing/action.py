@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from typing import List
 from uuid import uuid4
 
-from .models import BoxerAction
+from ...models.boxing.action import BoxerAction
 
 router = APIRouter(prefix="/actions", tags=["actions"])
 

@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
 
-from .models import Base, NodeModel, EdgeModel
+from .models import Base, NodeModel, EdgeModel, User
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",

@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from typing import List
 from uuid import uuid4
 
-from .models import BoxingState
+from ...models.boxing.state import BoxingState
 
 router = APIRouter(prefix="/states", tags=["states"])
 states_db: List[BoxingState] = []
