@@ -157,9 +157,9 @@ function mergeFrontendNodeData(
   });
 }
 
-export default function GraphEditor() {
+export default function GraphEditor({ graphId }: { graphId?: string }) {
   const router = useRouter();
-  const { currentGraph, saveGraph: saveGraphContext, loading: contextLoading, error: contextError } = useGraph();
+  const { currentGraph, openGraph, saveGraph: saveGraphContext, loading: contextLoading, error: contextError } = useGraph();
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
   const [loading, setLoading] = useState(true);
@@ -222,7 +222,21 @@ export default function GraphEditor() {
     [onEdgesChange, markDirty],
   );
 
-  // Load graph from context
+  // Load specific graph if graphId is provided
+  useEffect(() => {
+    if (graphId) {
+      setLoading(true);
+      openGraph(graphId)
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : "Failed to load graph");
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [graphId, openGraph]);
+
+  // Load graph data into editor when currentGraph changes
   useEffect(() => {
     if (currentGraph) {
       setNodes((currentNodes) =>
@@ -233,12 +247,8 @@ export default function GraphEditor() {
       );
       setEdges(toFlowEdges(currentGraph.edges));
       setDirty(false);
-      setLoading(false);
-    } else if (!contextLoading) {
-      // No current graph, show defaults
-      setLoading(false);
     }
-  }, [currentGraph, contextLoading, handleOpenNodeEditor, setNodes, setEdges]);
+  }, [currentGraph, handleOpenNodeEditor, setNodes, setEdges]);
 
   useEffect(() => {
     setNodes((existingNodes) => attachNodeEditor(existingNodes, handleOpenNodeEditor));

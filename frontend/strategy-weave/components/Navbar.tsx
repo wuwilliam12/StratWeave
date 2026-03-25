@@ -17,6 +17,7 @@ type NavbarProps = {
 const navItems: NavItem[] = [
   { href: "/", label: "Splash" },
   { href: "/home", label: "Home" },
+  { href: "/graphs", label: "My Graphs" },
   { href: "/graph_editor", label: "Editor" },
 ];
 
