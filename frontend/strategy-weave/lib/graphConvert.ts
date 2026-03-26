@@ -3,7 +3,7 @@
  */
 
 import type { Node, Edge } from "reactflow";
-import type { GraphNode, GraphEdge } from "@/types/graph";
+import type { Node as GraphNode, Edge as GraphEdge } from "@/lib/graphApi";
 import { CUSTOM_FLOW_EDGE_TYPE } from "@/features/flow/components/edges/edgeTypes";
 
 /**
@@ -44,12 +44,7 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
       sport: n.sport ?? null,
       action_id: n.action_id ?? null,
       athlete_id: n.athlete_id ?? null,
-      athleteRole:
-        n.athlete_role === "user" ||
-        n.athlete_role === "opponent" ||
-        n.athlete_role === "neutral"
-          ? n.athlete_role
-          : null,
+      athleteRole: null, // TODO: Add athlete_role to API
     } as FlowNodeData,
   }));
 }
@@ -83,7 +78,7 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
     const data = (n.data ?? {}) as Partial<FlowNodeData>;
 
     return {
-      id: n.id ?? null,
+      id: n.id || undefined,
       // Persist the main visible text; details stay frontend‑only for now.
       label: data.label ?? "",
       position_x: n.position?.x ?? 0,
@@ -97,7 +92,6 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
       sport: data.sport ?? null,
       action_id: data.action_id ?? null,
       athlete_id: data.athlete_id ?? null,
-      athlete_role: data.athleteRole ?? null,
     };
   });
 }
@@ -105,11 +99,9 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
 /* Convert React Flow edges to API edges */
 export function toApiEdges(flowEdges: Edge[]): GraphEdge[] {
   return flowEdges.map((e) => ({
-    id: e.id,
+    id: e.id || undefined,
     source: e.source,
     target: e.target,
-    // Keep a simple string label on the edge itself for now.
-    // Mini node / rich label support will be layered on top of this.
     label: ((e.data as FlowEdgeData | undefined)?.label as string) ?? "",
     probability: (e.data as FlowEdgeData | undefined)?.probability ?? undefined,
     stamina_cost: (e.data as FlowEdgeData | undefined)?.staminaCost ?? undefined,

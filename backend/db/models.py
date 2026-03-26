@@ -2,7 +2,7 @@
 SQLAlchemy models for persistent storage.
 Mirror api.models.graph (Node, Edge) for the graph feature.
 """
-from sqlalchemy import String, Float, Text
+from sqlalchemy import String, Float, Text, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -19,11 +19,24 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
 
 
+class GraphModel(Base):
+    __tablename__ = "graphs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class NodeModel(Base):
     __tablename__ = "nodes"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     strategy_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    graph_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     parent_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     label: Mapped[str] = mapped_column(Text, nullable=False)
     sport: Mapped[str | None] = mapped_column(String(32), nullable=True)
@@ -40,6 +53,7 @@ class EdgeModel(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     source: Mapped[str] = mapped_column(String(36), nullable=False)
     target: Mapped[str] = mapped_column(String(36), nullable=False)
+    graph_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     label: Mapped[str] = mapped_column(Text, default="")
     probability: Mapped[float] = mapped_column(Float, default=1.0)
     stamina_cost: Mapped[float] = mapped_column(Float, default=0)

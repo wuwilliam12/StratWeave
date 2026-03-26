@@ -13,7 +13,7 @@ import {
   type NodeChange,
 } from "reactflow";
 
-import { fetchGraph, saveGraph } from "@/lib/api";
+import { useGraph } from "@/contexts/GraphContext";
 import {
   toFlowNodes,
   toFlowEdges,
@@ -157,8 +157,9 @@ function mergeFrontendNodeData(
   });
 }
 
-export default function GraphEditor() {
+export default function GraphEditor({ graphId }: { graphId?: string }) {
   const router = useRouter();
+  const { currentGraph, openGraph, saveGraph: saveGraphContext, loading: contextLoading, error: contextError } = useGraph();
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
   const [loading, setLoading] = useState(true);
@@ -221,35 +222,34 @@ export default function GraphEditor() {
     [onEdgesChange, markDirty],
   );
 
-  // Load graph from backend
+  // Load specific graph if graphId is provided
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    let cancelled = false;
-    fetchGraph()
-      .then((payload) => {
-        if (cancelled) return;
-        if (payload.nodes.length > 0 || payload.edges.length > 0) {
-          setNodes((currentNodes) =>
-            attachNodeEditor(
-              mergeFrontendNodeData(toFlowNodes(payload.nodes), currentNodes),
-              handleOpenNodeEditor,
-            ),
-          );
-          setEdges(toFlowEdges(payload.edges));
-        }
-        setDirty(false);
-      })
-      .catch((err) => {
-        if (!cancelled) {
+    if (graphId) {
+      setLoading(true);
+      openGraph(graphId)
+        .catch((err) => {
           setError(err instanceof Error ? err.message : "Failed to load graph");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [setNodes, setEdges, handleOpenNodeEditor]);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [graphId, openGraph]);
+  useEffect(() => {
+    if (currentGraph) {
+      setNodes((currentNodes) =>
+        attachNodeEditor(
+          mergeFrontendNodeData(toFlowNodes(currentGraph.nodes), currentNodes),
+          handleOpenNodeEditor,
+        ),
+      );
+      setEdges(toFlowEdges(currentGraph.edges));
+      setDirty(false);
+    }
+  }, [currentGraph, handleOpenNodeEditor, setNodes, setEdges]);
+
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     setNodes((existingNodes) => attachNodeEditor(existingNodes, handleOpenNodeEditor));
@@ -274,27 +274,27 @@ export default function GraphEditor() {
   );
 
   const handleSave = useCallback(() => {
+    if (!currentGraph) {
+      setError("No graph to save");
+      return;
+    }
     setSaving(true);
     setError(null);
-    saveGraph({
+    saveGraphContext({
+      name: currentGraph.name,
+      description: currentGraph.description,
+      is_public: currentGraph.is_public,
       nodes: toApiNodes(nodes),
       edges: toApiEdges(edges),
     })
-      .then((payload) => {
-        setNodes((currentNodes) =>
-          attachNodeEditor(
-            mergeFrontendNodeData(toFlowNodes(payload.nodes), currentNodes),
-            handleOpenNodeEditor,
-          ),
-        );
-        setEdges(toFlowEdges(payload.edges));
+      .then(() => {
         setDirty(false);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Failed to save graph");
       })
       .finally(() => setSaving(false));
-  }, [nodes, edges, setNodes, setEdges, handleOpenNodeEditor]);
+  }, [currentGraph, nodes, edges, saveGraphContext]);
 
   const handleAddNode = useCallback(
     (position?: { x: number; y: number }) => {

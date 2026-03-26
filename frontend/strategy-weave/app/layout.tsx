@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
+import { GraphProvider } from "@/contexts/GraphContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="en">
       {/* Layout stays minimal while app-level nav and shells are page-owned. */}
       <body>
-        {children}
+        <GraphProvider>
+          {children}
+        </GraphProvider>
         <Toaster />
       </body>
     </html>
