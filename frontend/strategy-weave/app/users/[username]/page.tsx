@@ -20,9 +20,12 @@ export default function UserProfilePage() {
   const params = useParams();
   const username = params.username as string;
 
+  type SectionKey = "overview" | "stats" | "activity" | "publicGraphs";
+
   const [user, setUser] = useState<UserPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedSection, setSelectedSection] = useState<SectionKey>("overview");
 
   useEffect(() => {
     if (username) {
@@ -76,148 +79,130 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Profile Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex items-start space-x-6">
-            {/* Avatar Placeholder */}
-            <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-gray-600">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+          <aside className="bg-white rounded-lg shadow-sm p-4 sticky top-5">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-gray-300 mx-auto flex items-center justify-center text-3xl font-bold text-gray-600">
                 {user.username.charAt(0).toUpperCase()}
-              </span>
+              </div>
+              <h2 className="mt-3 font-semibold text-lg text-gray-900">{user.username}</h2>
+              <p className="text-xs text-gray-500">{user.email}</p>
             </div>
 
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
-              <p className="text-gray-600 mt-1">{user.email}</p>
+            <div className="space-y-2">
+              {(
+                [
+                  ["overview", "Overview"],
+                  ["stats", "Stats"],
+                  ["activity", "Activity"],
+                  ["publicGraphs", "Public Graphs"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedSection(key)}
+                  className={`w-full text-left px-3 py-2 rounded-md ${
+                    selectedSection === key
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                      : "hover:bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </aside>
 
-              {user.bio && (
-                <p className="text-gray-700 mt-3">{user.bio}</p>
-              )}
-
-              {user.credentials && (
-                <div className="mt-3">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    {user.credentials}
-                  </span>
+          <main>
+            {selectedSection === "overview" && (
+              <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
+                <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
+                {user.bio && <p className="text-gray-700">{user.bio}</p>}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border border-gray-200 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-indigo-600">{user.total_graphs}</div>
+                    <div className="text-xs text-gray-500">Total Graphs</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-green-600">{user.public_graphs}</div>
+                    <div className="text-xs text-gray-500">Public Graphs</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-purple-600">{user.join_date ? new Date(user.join_date).getFullYear() : "—"}</div>
+                    <div className="text-xs text-gray-500">Member Since</div>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-indigo-600">{user.total_graphs}</div>
-              <div className="text-gray-600 mt-1">Total Graphs</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{user.public_graphs}</div>
-              <div className="text-gray-600 mt-1">Public Graphs</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">
-                {user.join_date ? new Date(user.join_date).getFullYear() : "2024"}
               </div>
-              <div className="text-gray-600 mt-1">Member Since</div>
-            </div>
-          </div>
-        </div>
+            )}
 
-        {/* Activity Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-          <div className="space-y-4">
-            {/* Placeholder activities */}
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Created new strategy graph "Pressure Southpaw"</p>
-                <p className="text-xs text-gray-500">2 days ago</p>
+            {selectedSection === "stats" && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold mb-4">Stats</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-indigo-50 text-center">
+                    <div className="text-3xl font-bold text-indigo-600">{user.total_graphs}</div>
+                    <div className="text-sm text-gray-600">Total Graphs</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-green-50 text-center">
+                    <div className="text-3xl font-bold text-green-600">{user.public_graphs}</div>
+                    <div className="text-sm text-gray-600">Public Graphs</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-purple-50 text-center">
+                    <div className="text-3xl font-bold text-purple-600">{user.join_date ? new Date(user.join_date).getFullYear() : "—"}</div>
+                    <div className="text-sm text-gray-600">Member Since</div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Updated opponent analysis for "Shadow Boxer"</p>
-                <p className="text-xs text-gray-500">1 week ago</p>
+            {selectedSection === "activity" && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-sm text-gray-900">Created new strategy graph &quot;Pressure Southpaw&quot;</p>
+                    <p className="text-xs text-gray-500">2 days ago</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-sm text-gray-900">Updated opponent analysis for &quot;Shadow Boxer&quot;</p>
+                    <p className="text-xs text-gray-500">1 week ago</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-sm text-gray-900">Published style blueprint &quot;Outside Jab System&quot;</p>
+                    <p className="text-xs text-gray-500">2 weeks ago</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Published style blueprint "Outside Jab System"</p>
-                <p className="text-xs text-gray-500">2 weeks ago</p>
+            {selectedSection === "publicGraphs" && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold mb-4">Public Graphs</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-900">Pressure Southpaw Camp</h3>
+                    <p className="text-sm text-gray-600 mt-1">Strategy analysis for southpaw opponents</p>
+                    <p className="text-xs text-gray-500 mt-2">2h ago • 12 nodes</p>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-900">Outside Jab Style Shell</h3>
+                    <p className="text-sm text-gray-600 mt-1">Reusable style blueprint for jab-focused fighters</p>
+                    <p className="text-xs text-gray-500 mt-2">Yesterday • 8 nodes</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+            )}
 
-        {/* Public Graphs Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Public Graphs</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Placeholder graphs */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-medium text-gray-900">Pressure Southpaw Camp</h3>
-              <p className="text-sm text-gray-600 mt-1">Strategy analysis for southpaw opponents</p>
-              <div className="flex items-center mt-2 text-xs text-gray-500">
-                <span>Updated 2h ago</span>
-                <span className="mx-2">•</span>
-                <span>12 nodes</span>
-              </div>
+            <div className="mt-6 text-right">
+              <Link
+                href="/home"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                ← Back to Home
+              </Link>
             </div>
-
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-medium text-gray-900">Outside Jab Style Shell</h3>
-              <p className="text-sm text-gray-600 mt-1">Reusable style blueprint for jab-focused fighters</p>
-              <div className="flex items-center mt-2 text-xs text-gray-500">
-                <span>Updated yesterday</span>
-                <span className="mx-2">•</span>
-                <span>8 nodes</span>
-              </div>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-medium text-gray-900">Body Jab Counter Tree</h3>
-              <p className="text-sm text-gray-600 mt-1">Counter strategies for body jab attacks</p>
-              <div className="flex items-center mt-2 text-xs text-gray-500">
-                <span>Updated 3 days ago</span>
-                <span className="mx-2">•</span>
-                <span>15 nodes</span>
-              </div>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-medium text-gray-900">Volume Punching System</h3>
-              <p className="text-sm text-gray-600 mt-1">High-volume combinations and patterns</p>
-              <div className="flex items-center mt-2 text-xs text-gray-500">
-                <span>Updated 1 week ago</span>
-                <span className="mx-2">•</span>
-                <span>20 nodes</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Back Button */}
-        <div className="mt-6 text-center">
-          <Link
-            href="/home"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            ← Back to Home
-          </Link>
+          </main>
         </div>
       </div>
     </div>
