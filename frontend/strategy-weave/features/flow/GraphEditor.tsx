@@ -223,6 +223,7 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
   );
 
   // Load specific graph if graphId is provided
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (graphId) {
       setLoading(true);
@@ -235,8 +236,6 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
       setLoading(false);
     }
   }, [graphId, openGraph]);
-
-  // Load graph data into editor when currentGraph changes
   useEffect(() => {
     if (currentGraph) {
       setNodes((currentNodes) =>
@@ -249,6 +248,8 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
       setDirty(false);
     }
   }, [currentGraph, handleOpenNodeEditor, setNodes, setEdges]);
+
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     setNodes((existingNodes) => attachNodeEditor(existingNodes, handleOpenNodeEditor));

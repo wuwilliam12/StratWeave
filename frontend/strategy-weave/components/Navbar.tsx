@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 type NavItem = {
@@ -26,12 +25,8 @@ export default function Navbar({
   primaryAction = { href: "/graph_editor", label: "Open editor" },
   secondaryAction = { href: "/home", label: "View home" },
 }: NavbarProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, []);
+  const isLoggedIn =
+    typeof window !== "undefined" && !!localStorage.getItem("token");
 
   const loggedInNavItems = isLoggedIn
     ? [...navItems, { href: "/profile", label: "Profile" }]

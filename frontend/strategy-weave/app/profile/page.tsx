@@ -66,7 +66,7 @@ export default function ProfilePage() {
       } else {
         setError("Failed to load profile");
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setLoading(false);
@@ -121,7 +121,7 @@ export default function ProfilePage() {
         const errorData = await response.json();
         setError(errorData.detail || "Update failed");
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setUpdating(false);
@@ -191,7 +191,7 @@ export default function ProfilePage() {
         const errorData = await response.json();
         setError(errorData.detail || "Unable to update password");
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setUpdating(false);

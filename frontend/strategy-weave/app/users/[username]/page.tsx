@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -27,13 +27,7 @@ export default function UserProfilePage() {
   const [error, setError] = useState("");
   const [selectedSection, setSelectedSection] = useState<SectionKey>("overview");
 
-  useEffect(() => {
-    if (username) {
-      fetchUser();
-    }
-  }, [username]);
-
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:8000/api/auth/users/${username}`);
 
@@ -45,12 +39,18 @@ export default function UserProfilePage() {
       } else {
         setError("Failed to load profile");
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setLoading(false);
     }
-  };
+  }, [username]);
+
+  useEffect(() => {
+    if (username) {
+      fetchUser();
+    }
+  }, [username, fetchUser]);
 
   if (loading) {
     return (
