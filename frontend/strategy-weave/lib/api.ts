@@ -81,10 +81,32 @@ export interface BoxerAction {
   base_time?: number;
 }
 
+export interface BoxingBagItem {
+  id?: string | null;
+  name: string;
+  description?: string | null;
+  action_id?: string | null;
+  group?: string | null;
+  source?: string | null;
+  mastery?: string | null;
+  learned_at?: string | null;
+}
+
 export async function fetchBoxers(): Promise<Boxer[]> {
   return fetchApi<Boxer[]>("/boxing/boxers/");
 }
 
 export async function fetchActions(): Promise<BoxerAction[]> {
   return fetchApi<BoxerAction[]>("/boxing/actions/");
+}
+
+export async function fetchBagItems(): Promise<BoxingBagItem[]> {
+  return fetchApi<BoxingBagItem[]>("/boxing/bag/");
+}
+
+export async function createBagItem(item: BoxingBagItem): Promise<BoxingBagItem> {
+  return fetchApi<BoxingBagItem>("/boxing/bag/", {
+    method: "POST",
+    body: JSON.stringify(item),
+  });
 }
