@@ -24,6 +24,14 @@ const launchPads = [
     cta: "View library",
     badge: "My graphs",
   },
+  {
+    title: "Open training bag",
+    description:
+      "Manage tools, conventions, and learned techniques in a personal bag with group-based labels and mastery tracking.",
+    href: "/bag",
+    cta: "Open bag",
+    badge: "Skill kit",
+  },
 ];
 
 export default function HomePage() {
