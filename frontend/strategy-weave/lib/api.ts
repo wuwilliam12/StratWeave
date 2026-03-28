@@ -86,6 +86,7 @@ export interface BoxingBagItem {
   name: string;
   description?: string | null;
   action_id?: string | null;
+  bag_id?: string;
   group?: string | null;
   source?: string | null;
   reference_url?: string | null;
@@ -107,6 +108,41 @@ export async function fetchBagItems(): Promise<BoxingBagItem[]> {
 
 export async function createBagItem(item: BoxingBagItem): Promise<BoxingBagItem> {
   return fetchApi<BoxingBagItem>("/boxing/bag/", {
+    method: "POST",
+    body: JSON.stringify(item),
+  });
+}
+
+export interface Bag {
+  id: string | null;
+  name: string;
+  description?: string;
+  owner_id: string;
+  is_public: boolean;
+  created_at?: string;
+}
+
+export async function fetchPublicBags(): Promise<Bag[]> {
+  return fetchApi<Bag[]>("/boxing/bag/bags/");
+}
+
+export async function fetchBag(bagId: string): Promise<Bag> {
+  return fetchApi<Bag>(`/boxing/bag/bags/${bagId}`);
+}
+
+export async function createBag(bag: Bag): Promise<Bag> {
+  return fetchApi<Bag>("/boxing/bag/bags/", {
+    method: "POST",
+    body: JSON.stringify(bag),
+  });
+}
+
+export async function fetchBagItemsByBag(bagId: string): Promise<BoxingBagItem[]> {
+  return fetchApi<BoxingBagItem[]>(`/boxing/bag/bags/${bagId}/items/`);
+}
+
+export async function createBagItemInBag(bagId: string, item: BoxingBagItem): Promise<BoxingBagItem> {
+  return fetchApi<BoxingBagItem>(`/boxing/bag/bags/${bagId}/items/`, {
     method: "POST",
     body: JSON.stringify(item),
   });

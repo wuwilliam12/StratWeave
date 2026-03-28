@@ -1,15 +1,20 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { createBagItem, fetchBagItems, type BoxingBagItem } from "@/lib/api";
+import { createBagItem, createBagItemInBag, fetchBagItems, fetchBagItemsByBag, type BoxingBagItem, type Bag } from "@/lib/api";
 
 type SortOption = "name" | "mastery" | "group" | "learned_at";
 
 const MASTERY_ORDER = { novice: 0, intermediate: 1, advanced: 2 };
 
-export default function BagManager() {
-  const [bagItems, setBagItems] = useState<BoxingBagItem[]>([]);
-  const [loading, setLoading] = useState(true);
+interface BagManagerProps {
+  bag?: Bag;
+  initialItems?: BoxingBagItem[];
+}
+
+export default function BagManager({ bag, initialItems }: BagManagerProps) {
+  const [bagItems, setBagItems] = useState<BoxingBagItem[]>(initialItems || []);
+  const [loading, setLoading] = useState(!initialItems);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name");
@@ -24,10 +29,11 @@ export default function BagManager() {
   });
 
   const loadBag = async () => {
+    if (initialItems) return; // Already have initial items
     setLoading(true);
     setError(null);
     try {
-      const items = await fetchBagItems();
+      const items = bag ? await fetchBagItemsByBag(bag.id!) : await fetchBagItems();
       setBagItems(items);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load bag items");
@@ -38,7 +44,7 @@ export default function BagManager() {
 
   useEffect(() => {
     loadBag();
-  }, []);
+  }, [bag?.id]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,15 +54,25 @@ export default function BagManager() {
     }
     setError(null);
     try {
-      await createBagItem({
-        name: draft.name.trim(),
-        description: draft.description?.trim() ?? "",
-        group: draft.group?.trim() || "Ungrouped",
-        source: draft.source?.trim() || "Manual",
-        reference_url: draft.reference_url?.trim() || undefined,
-        mastery: draft.mastery || "novice",
-        learned_at: draft.learned_at || new Date().toISOString().slice(0, 10),
-      } as BoxingBagItem);
+      const item = bag
+        ? await createBagItemInBag(bag.id!, {
+            name: draft.name.trim(),
+            description: draft.description?.trim() ?? "",
+            group: draft.group?.trim() || "Ungrouped",
+            source: draft.source?.trim() || "Manual",
+            reference_url: draft.reference_url?.trim() || undefined,
+            mastery: draft.mastery || "novice",
+            learned_at: draft.learned_at || new Date().toISOString().slice(0, 10),
+          } as BoxingBagItem)
+        : await createBagItem({
+            name: draft.name.trim(),
+            description: draft.description?.trim() ?? "",
+            group: draft.group?.trim() || "Ungrouped",
+            source: draft.source?.trim() || "Manual",
+            reference_url: draft.reference_url?.trim() || undefined,
+            mastery: draft.mastery || "novice",
+            learned_at: draft.learned_at || new Date().toISOString().slice(0, 10),
+          } as BoxingBagItem);
       setDraft({
         name: "",
         description: "",
@@ -114,8 +130,12 @@ export default function BagManager() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
       <header className="rounded-xl border border-border bg-surface p-4">
-        <h1 className="text-2xl font-semibold">Training Bag</h1>
-        <p className="mt-1 text-sm text-muted">Add weapons/tools to your kit, categorize by group, and track mastery.</p>
+        <h1 className="text-2xl font-semibold">
+          {bag ? bag.name : "Training Bag"}
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          {bag?.description || "Add weapons/tools to your kit, categorize by group, and track mastery."}
+        </p>
       </header>
 
       <section className="rounded-xl border border-border bg-surface p-4">
