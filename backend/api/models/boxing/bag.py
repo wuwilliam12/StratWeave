@@ -9,5 +9,6 @@ class BoxingBagItem(BaseModel):
     action_id: Optional[str] = None
     group: Optional[str] = None
     source: Optional[str] = None  # e.g. "training camp", "coach session"
+    reference_url: Optional[str] = None  # e.g. YouTube tutorial link for the move
     mastery: Optional[str] = "novice"  # e.g. novice/intermediate/master
     learned_at: Optional[str] = None  # ISO date string

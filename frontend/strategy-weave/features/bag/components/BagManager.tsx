@@ -12,6 +12,7 @@ export default function BagManager() {
     description: "",
     group: "",
     source: "",
+    reference_url: "",
     mastery: "novice",
     learned_at: new Date().toISOString().slice(0, 10),
   });
@@ -46,6 +47,7 @@ export default function BagManager() {
         description: draft.description?.trim() ?? "",
         group: draft.group?.trim() || "Ungrouped",
         source: draft.source?.trim() || "Manual",
+        reference_url: draft.reference_url?.trim() || undefined,
         mastery: draft.mastery || "novice",
         learned_at: draft.learned_at || new Date().toISOString().slice(0, 10),
       } as BoxingBagItem);
@@ -54,6 +56,7 @@ export default function BagManager() {
         description: "",
         group: "",
         source: "",
+        reference_url: "",
         mastery: "novice",
         learned_at: new Date().toISOString().slice(0, 10),
       });
@@ -118,6 +121,16 @@ export default function BagManager() {
             />
           </label>
           <label className="space-y-1">
+            <span className="text-sm font-medium">Reference URL</span>
+            <input
+              value={draft.reference_url || ""}
+              onChange={(e) => setDraft((prev) => ({ ...prev, reference_url: e.target.value }))}
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            <p className="text-xs text-muted">Optional tutorial or reference link for this move.</p>
+          </label>
+          <label className="space-y-1">
             <span className="text-sm font-medium">Mastery</span>
             <select
               value={draft.mastery || "novice"}
@@ -169,6 +182,18 @@ export default function BagManager() {
                       </div>
                       {item.description && <p className="text-xs text-muted">{item.description}</p>}
                       <p className="mt-1 text-xs text-muted">{item.source || "source unknown"} • {item.learned_at || "date unknown"}</p>
+                      {item.reference_url ? (
+                        <p className="mt-1 text-xs">
+                          Reference: <a
+                            href={item.reference_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            {item.reference_url}
+                          </a>
+                        </p>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

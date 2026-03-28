@@ -88,6 +88,7 @@ export interface BoxingBagItem {
   action_id?: string | null;
   group?: string | null;
   source?: string | null;
+  reference_url?: string | null;
   mastery?: string | null;
   learned_at?: string | null;
 }
