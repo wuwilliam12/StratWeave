@@ -3,10 +3,16 @@
 import { FormEvent, useEffect, useState } from "react";
 import { createBagItem, fetchBagItems, type BoxingBagItem } from "@/lib/api";
 
+type SortOption = "name" | "mastery" | "group" | "learned_at";
+
+const MASTERY_ORDER = { novice: 0, intermediate: 1, advanced: 2 };
+
 export default function BagManager() {
   const [bagItems, setBagItems] = useState<BoxingBagItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("name");
   const [draft, setDraft] = useState<Partial<BoxingBagItem>>({
     name: "",
     description: "",
@@ -66,7 +72,39 @@ export default function BagManager() {
     }
   };
 
-  const groups = bagItems.reduce<Record<string, BoxingBagItem[]>>((acc, item) => {
+  // Filter items based on search query
+  const filteredItems = bagItems.filter((item) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      item.name?.toLowerCase().includes(query) ||
+      item.description?.toLowerCase().includes(query) ||
+      item.group?.toLowerCase().includes(query) ||
+      item.source?.toLowerCase().includes(query)
+    );
+  });
+
+  // Sort items
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return (a.name || "").localeCompare(b.name || "");
+      case "mastery": {
+        const masteryA = MASTERY_ORDER[a.mastery as keyof typeof MASTERY_ORDER] ?? 0;
+        const masteryB = MASTERY_ORDER[b.mastery as keyof typeof MASTERY_ORDER] ?? 0;
+        return masteryA - masteryB;
+      }
+      case "group":
+        return (a.group || "Ungrouped").localeCompare(b.group || "Ungrouped");
+      case "learned_at":
+        return new Date(b.learned_at || 0).getTime() - new Date(a.learned_at || 0).getTime();
+      default:
+        return 0;
+    }
+  });
+
+  // Group sorted items
+  const groups = sortedItems.reduce<Record<string, BoxingBagItem[]>>((acc, item) => {
     const key = item.group?.trim() || "Ungrouped";
     if (!acc[key]) acc[key] = [];
     acc[key].push(item);
@@ -161,15 +199,49 @@ export default function BagManager() {
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Bag inventory</h2>
-          {loading && <span className="text-sm text-muted">Loading...</span>}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Bag inventory</h2>
+            {loading && <span className="text-sm text-muted">Loading...</span>}
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium">Search</span>
+              <input
+                type="text"
+                placeholder="Filter by name, description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-800"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium">Sort by</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-800"
+              >
+                <option value="name">Name</option>
+                <option value="mastery">Mastery Level</option>
+                <option value="group">Group</option>
+                <option value="learned_at">Recently Learned</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         {!loading && bagItems.length === 0 ? (
           <p className="mt-3 text-sm text-muted">No items in your bag yet. Add with the form above.</p>
+        ) : !loading && filteredItems.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">No items match your search. Try different keywords.</p>
         ) : (
           <div className="mt-4 space-y-4">
+            {!loading && (
+              <p className="text-xs text-muted">
+                Showing {filteredItems.length} of {bagItems.length} item{bagItems.length !== 1 ? "s" : ""}
+              </p>
+            )}
             {Object.entries(groups).map(([group, items]) => (
               <div key={group} className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900">
                 <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">{group}</h3>
