@@ -1,5 +1,8 @@
 /**
  * API client for StratWeave backend (graph nodes/edges, sport models).
+ * 
+ * Generic bag/training system that works with any sport.
+ * Sport-specific implementations include boxing.
  */
 
 import type { GraphPayload } from "@/types/graph";
@@ -24,6 +27,230 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(`API ${res.status}: ${text}`);
   }
   return res.json() as Promise<T>;
+}
+
+/* Generic/Common types - Sport agnostic */
+
+/**
+ * Generic training item used across all sports.
+ * Can represent techniques, plays, strategies, etc.
+ */
+export interface TrainingItem {
+  id?: string | null;
+  name: string;
+  description?: string | null;
+  item_type?: string | null; // e.g., "technique", "play", "strategy"
+  entity_id?: string | null; // Sport-specific ID (action_id, play_id, etc.)
+  bag_id?: string;
+  group?: string | null;
+  source?: string | null;
+  reference_url?: string | null;
+  mastery?: string | null;
+  learned_at?: string | null;
+  last_practiced?: string | null;
+  tags?: string[];
+  notes?: Record<string, any>;
+}
+
+/**
+ * Training bag metadata (sport agnostic)
+ */
+export interface TrainingBag {
+  id: string | null;
+  name: string;
+  description?: string;
+  owner_id: string;
+  is_public: boolean;
+  sport?: string;
+  created_at?: string;
+  updated_at?: string;
+  items?: TrainingItem[];
+}
+
+/* Generic bag operations that work with any sport */
+
+/**
+ * Create a generic sport-agnostic bag API base path.
+ * Usage: `const basePath = createBagPath("boxing")` → "/boxing/bag"
+ */
+function createBagPath(sport: string): string {
+  return `/${sport}/bag`;
+}
+
+/**
+ * Fetch all public bags for a sport.
+ */
+export async function fetchPublicBagsBySport(sport: string): Promise<TrainingBag[]> {
+  return fetchApi<TrainingBag[]>(`${createBagPath(sport)}/bags/`);
+}
+
+/**
+ * Fetch a specific bag.
+ */
+export async function fetchBagBySport(sport: string, bagId: string): Promise<TrainingBag> {
+  return fetchApi<TrainingBag>(`${createBagPath(sport)}/bags/${bagId}`);
+}
+
+/**
+ * Create a new bag.
+ */
+export async function createBagBySport(sport: string, bag: TrainingBag): Promise<TrainingBag> {
+  return fetchApi<TrainingBag>(`${createBagPath(sport)}/bags/`, {
+    method: "POST",
+    body: JSON.stringify(bag),
+  });
+}
+
+/**
+ * Update a bag.
+ */
+export async function updateBagBySport(sport: string, bagId: string, updates: Partial<TrainingBag>): Promise<TrainingBag> {
+  return fetchApi<TrainingBag>(`${createBagPath(sport)}/bags/${bagId}`, {
+    method: "PUT",
+    body: JSON.stringify(updates),
+  });
+}
+
+/**
+ * Delete a bag.
+ */
+export async function deleteBagBySport(sport: string, bagId: string): Promise<void> {
+  await fetchApi(`${createBagPath(sport)}/bags/${bagId}`, {
+    method: "DELETE",
+  });
+}
+
+/**
+ * Fetch items in a bag.
+ */
+export async function fetchBagItemsByBagSport(sport: string, bagId: string): Promise<TrainingItem[]> {
+  return fetchApi<TrainingItem[]>(`${createBagPath(sport)}/bags/${bagId}/items/`);
+}
+
+/**
+ * Add an item to a bag.
+ */
+export async function createBagItemInBagBySport(sport: string, bagId: string, item: TrainingItem): Promise<TrainingItem> {
+  return fetchApi<TrainingItem>(`${createBagPath(sport)}/bags/${bagId}/items/`, {
+    method: "POST",
+    body: JSON.stringify(item),
+  });
+}
+
+/**
+ * Update an item in a bag.
+ */
+export async function updateBagItemBySport(sport: string, bagId: string, itemId: string, updates: Partial<TrainingItem>): Promise<TrainingItem> {
+  return fetchApi<TrainingItem>(`${createBagPath(sport)}/bags/${bagId}/items/${itemId}`, {
+    method: "PUT",
+    body: JSON.stringify(updates),
+  });
+}
+
+/**
+ * Delete an item from a bag.
+ */
+export async function deleteBagItemBySport(sport: string, bagId: string, itemId: string): Promise<void> {
+  await fetchApi(`${createBagPath(sport)}/bags/${bagId}/items/${itemId}`, {
+    method: "DELETE",
+  });
+}
+
+/* Boxing-specific convenience types and functions for backward compatibility */
+
+export interface Boxer {
+  id?: string | null;
+  speed?: number;
+  power?: number;
+  reach?: number;
+  height?: number;
+  reaction_time?: number;
+  style?: string | null;
+}
+
+export interface BoxerAction {
+  id?: string | null;
+  name: string;
+  lead_hand?: string | null;
+  rear_hand?: string | null;
+  footwork?: string | null;
+  head_movement?: string | null;
+  stamina_cost?: number;
+  base_time?: number;
+}
+
+/**
+ * @deprecated Use TrainingItem instead. Kept for backward compatibility.
+ */
+export interface BoxingBagItem extends TrainingItem {
+  action_id?: string | null; // Boxing-specific alias for entity_id
+}
+
+/**
+ * @deprecated Use TrainingBag instead. Kept for backward compatibility.
+ */
+export interface Bag extends TrainingBag {}
+
+/* Boxing-specific API functions (convenience wrappers) */
+
+export async function fetchBoxers(): Promise<Boxer[]> {
+  return fetchApi<Boxer[]>("/boxing/boxers/");
+}
+
+export async function fetchActions(): Promise<BoxerAction[]> {
+  return fetchApi<BoxerAction[]>("/boxing/actions/");
+}
+
+/**
+ * @deprecated Use fetchBagItemsByBagSport("boxing", bagId) instead.
+ */
+export async function fetchBagItems(): Promise<BoxingBagItem[]> {
+  return fetchApi<BoxingBagItem[]>("/boxing/bag/");
+}
+
+/**
+ * @deprecated Use createBagItemInBagBySport("boxing", "personal-bag", item) instead.
+ */
+export async function createBagItem(item: BoxingBagItem): Promise<BoxingBagItem> {
+  return fetchApi<BoxingBagItem>("/boxing/bag/", {
+    method: "POST",
+    body: JSON.stringify(item),
+  });
+}
+
+/**
+ * @deprecated Use fetchPublicBagsBySport("boxing") instead.
+ */
+export async function fetchPublicBags(): Promise<Bag[]> {
+  return fetchPublicBagsBySport("boxing");
+}
+
+/**
+ * @deprecated Use fetchBagBySport("boxing", bagId) instead.
+ */
+export async function fetchBag(bagId: string): Promise<Bag> {
+  return fetchBagBySport("boxing", bagId);
+}
+
+/**
+ * @deprecated Use createBagBySport("boxing", bag) instead.
+ */
+export async function createBag(bag: Bag): Promise<Bag> {
+  return createBagBySport("boxing", bag);
+}
+
+/**
+ * @deprecated Use fetchBagItemsByBagSport("boxing", bagId) instead.
+ */
+export async function fetchBagItemsByBag(bagId: string): Promise<BoxingBagItem[]> {
+  return fetchBagItemsByBagSport("boxing", bagId);
+}
+
+/**
+ * @deprecated Use createBagItemInBagBySport("boxing", bagId, item) instead.
+ */
+export async function createBagItemInBag(bagId: string, item: BoxingBagItem): Promise<BoxingBagItem> {
+  return createBagItemInBagBySport("boxing", bagId, item);
 }
 
 /* Graph API calls */

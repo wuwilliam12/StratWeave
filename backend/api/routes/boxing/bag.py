@@ -1,12 +1,12 @@
-from fastapi import APIRouter, HTTPException
+"""
+Boxing-specific bag routes.
+Uses the generic bag router factory to provide bag management for boxing training items.
+"""
 from typing import List
-from uuid import uuid4
-from datetime import datetime
 
 from ...models.boxing.bag import BoxingBagItem
 from ...models.boxing.bag_model import Bag
-
-router = APIRouter(prefix="/bag", tags=["bag"])
+from ...routes.bags import create_bag_router
 
 # In-memory databases (replace with real DB later)
 bags_db: List[Bag] = [
@@ -33,7 +33,7 @@ bag_items_db: List[BoxingBagItem] = [
         id="bag-1",
         name="Double Jab to Cross",
         description="Fundamental working combination drilled this week.",
-        action_id="seed-jab",
+        entity_id="seed-jab",  # Maps to action_id
         bag_id="personal-bag",
         group="Weekly Focus",
         source="CoachSession",
@@ -65,48 +65,29 @@ bag_items_db: List[BoxingBagItem] = [
     ),
 ]
 
-@router.get("/bags/", response_model=List[Bag], summary="Get all public bags")
-def get_public_bags():
-    return [bag for bag in bags_db if bag.is_public]
-
-@router.get("/bags/{bag_id}", response_model=Bag, summary="Get a specific bag")
-def get_bag(bag_id: str):
-    bag = next((b for b in bags_db if b.id == bag_id), None)
-    if not bag:
-        raise HTTPException(status_code=404, detail="Bag not found")
-    return bag
-
-@router.post("/bags/", response_model=Bag, summary="Create a new bag")
-def create_bag(bag: Bag):
-    if not bag.id:
-        bag.id = str(uuid4())
-    if not bag.created_at:
-        bag.created_at = datetime.now().isoformat()
-    bags_db.append(bag)
-    return bag
-
-@router.get("/bags/{bag_id}/items/", response_model=List[BoxingBagItem], summary="Get items in a bag")
-def get_bag_items(bag_id: str):
-    return [item for item in bag_items_db if item.bag_id == bag_id]
-
-@router.post("/bags/{bag_id}/items/", response_model=BoxingBagItem, summary="Add an item to a bag")
-def create_bag_item(bag_id: str, item: BoxingBagItem):
-    # Check if bag exists
-    bag = next((b for b in bags_db if b.id == bag_id), None)
-    if not bag:
-        raise HTTPException(status_code=404, detail="Bag not found")
-    
-    if not item.id:
-        item.id = str(uuid4())
-    item.bag_id = bag_id
-    bag_items_db.append(item)
-    return item
+# Create boxing-specific router using the generic factory
+router = create_bag_router(
+    sport="boxing",
+    bag_model=Bag,
+    item_model=BoxingBagItem,
+    bags_db=bags_db,
+    items_db=bag_items_db,
+)
 
 # Legacy endpoints for backward compatibility (personal bag)
+# These are kept to avoid breaking existing code during transition
 @router.get("/", response_model=List[BoxingBagItem], summary="Get personal bag items (legacy)")
 def get_personal_bag_items():
-    return get_bag_items("personal-bag")
+    """Legacy endpoint: get items from the default personal-bag."""
+    return [item for item in bag_items_db if item.bag_id == "personal-bag"]
 
 @router.post("/", response_model=BoxingBagItem, summary="Add item to personal bag (legacy)")
 def create_personal_bag_item(item: BoxingBagItem):
-    return create_bag_item("personal-bag", item)
+    """Legacy endpoint: add item to the default personal-bag."""
+    from uuid import uuid4
+    if not item.id:
+        item.id = str(uuid4())
+    item.bag_id = "personal-bag"
+    bag_items_db.append(item)
+    return item
+
