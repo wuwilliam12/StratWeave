@@ -1,6 +1,8 @@
 import BagManager from "@/features/bag/components/BagManager";
 import { fetchBag, fetchBagItemsByBag } from "@/lib/api";
 
+export const dynamic = 'force-dynamic';
+
 export default async function BagPage() {
   // For now, hardcode the personal bag ID
   const bagId = "personal-bag";

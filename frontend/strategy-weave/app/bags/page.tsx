@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { fetchPublicBags } from "@/lib/api";
 
+export const dynamic = 'force-dynamic';
+
 export default async function BagsPage() {
   const bags = await fetchPublicBags();
 

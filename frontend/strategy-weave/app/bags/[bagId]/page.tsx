@@ -6,6 +6,8 @@ interface BagPageProps {
   params: Promise<{ bagId: string }>;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function BagPage({ params }: BagPageProps) {
   const { bagId } = await params;
 
