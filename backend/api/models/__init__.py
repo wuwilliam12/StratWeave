@@ -4,5 +4,5 @@ from .blueprints import (
     BoxingBlueprint,
     BoxingBlueprintScenario,
 )
-from .boxing import Boxer, BoxerAction
+from .boxing import Boxer, BoxerAction, BoxingBagItem
 from .graph import Edge, Node

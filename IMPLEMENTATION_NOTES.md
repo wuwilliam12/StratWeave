@@ -3,6 +3,12 @@
 ## Overview
 Implemented a complete framework for users to create, store, and manage their own graphs. This includes database schema updates, API endpoints with user authentication, and a frontend client library.
 
+## Bag/Training Toolkit (new)
+- In-memory `BoxingBagItem` model tracks learned items (name, action_id, group, source, mastery, date).
+- New route `POST /api/boxing/bag/` to add bag entries.
+- New route `GET /api/boxing/bag/` to retrieve bag entries.
+- Frontend palette displays grouped bag entries and includes mastery annotation for style building.
+
 ## Backend Changes
 
 ### Database Models (`db/models.py`)

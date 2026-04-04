@@ -35,7 +35,7 @@ export default function LoginPage() {
         const errorData = await response.json();
         toast.error(errorData.detail || "Login failed");
       }
-    } catch (err) {
+    } catch {
       toast.error("Network error");
     } finally {
       setLoading(false);

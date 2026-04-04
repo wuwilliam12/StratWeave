@@ -17,7 +17,8 @@ Content is **user-created** or **suggested** (e.g. community or system suggestio
 - **Strategy graph** - Add, connect, and explore nodes (strategies, counters, approaches).
 - **User & suggested content** - Create your own nodes/edges; system or community can suggest links.
 - **Counters & transitions** - Edges represent “counters”, “leads to”, or “beats” relationships.
-- **Future: ML** - Test and predict gameplan strength; suggest next strategies or counters.
+- **Bag / Training toolkit** - Track learned weapons/tools in a personal bag with group tags (e.g. training camp, weekly coach focus)
+- **ML / Analysis** - Planned
 
 ## Current Tech Stack
 

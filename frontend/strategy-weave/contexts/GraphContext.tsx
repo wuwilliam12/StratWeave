@@ -15,8 +15,6 @@ import {
   GraphSummary,
   GraphResponse,
   GraphCreate,
-  Node,
-  Edge,
 } from "@/lib/graphApi";
 
 interface GraphContextType {
