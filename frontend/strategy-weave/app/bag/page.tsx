@@ -11,7 +11,7 @@ export default async function BagPage() {
       fetchBag(bagId),
       fetchBagItemsByBag(bagId),
     ]);
-  } catch (error) {
+  } catch {
     // Fallback to old behavior if personal bag doesn't exist
     bag = undefined;
     items = undefined;

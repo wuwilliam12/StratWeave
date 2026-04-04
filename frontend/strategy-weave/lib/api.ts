@@ -49,7 +49,7 @@ export interface TrainingItem {
   learned_at?: string | null;
   last_practiced?: string | null;
   tags?: string[];
-  notes?: Record<string, any>;
+  notes?: Record<string, unknown>;
 }
 
 /**
@@ -185,11 +185,6 @@ export interface BoxerAction {
 export interface BoxingBagItem extends TrainingItem {
   action_id?: string | null; // Boxing-specific alias for entity_id
 }
-
-/**
- * @deprecated Use TrainingBag instead. Kept for backward compatibility.
- */
-export interface Bag extends TrainingBag {}
 
 /* Boxing-specific API functions (convenience wrappers) */
 

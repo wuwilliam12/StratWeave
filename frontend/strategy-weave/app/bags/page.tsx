@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { fetchPublicBags, type Bag } from "@/lib/api";
+import { fetchPublicBags } from "@/lib/api";
 
 export default async function BagsPage() {
   const bags = await fetchPublicBags();

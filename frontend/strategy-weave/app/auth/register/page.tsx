@@ -42,7 +42,7 @@ export default function RegisterPage() {
         const errorData = await response.json();
         toast.error(errorData.detail || "Registration failed");
       }
-    } catch (err) {
+    } catch {
       toast.error("Network error");
     } finally {
       setLoading(false);

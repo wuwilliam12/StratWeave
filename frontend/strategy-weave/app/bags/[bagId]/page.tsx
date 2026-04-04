@@ -17,7 +17,7 @@ export default async function BagPage({ params }: BagPageProps) {
       fetchBag(bagId),
       fetchBagItemsByBag(bagId),
     ]);
-  } catch (error) {
+  } catch {
     notFound();
   }
 
