@@ -1,6 +1,6 @@
 # StratWeave - Frontend & Backend targets
 
-.PHONY: help install install-frontend install-backend frontend backend dev build build-frontend build-backend lint clean
+.PHONY: help install install-frontend install-backend frontend backend dev build build-frontend build-backend lint test-backend test-frontend clean
 
 help:
 	@echo "StratWeave - Available commands:"
@@ -16,6 +16,8 @@ help:
 	@echo "  make build-frontend    - Build frontend for production"
 	@echo ""
 	@echo "  make lint              - Lint frontend code"
+	@echo "  make test-backend      - Run backend unit/API tests"
+	@echo "  make test-frontend     - Run frontend unit tests"
 	@echo "  make clean             - Remove build artifacts and cache files"
 
 # Installation targets
@@ -48,6 +50,13 @@ build-frontend:
 # Linting
 lint:
 	cd frontend/strategy-weave && npm run lint
+
+# Testing
+test-backend:
+	cd backend && pytest
+
+test-frontend:
+	cd frontend/strategy-weave && npm run test
 
 # Cleanup
 clean:
