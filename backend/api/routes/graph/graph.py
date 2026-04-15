@@ -56,7 +56,7 @@ def _node_to_pydantic(m: NodeModel) -> Node:
         label=m.label,
         sport=getattr(m, "sport", None),
         action_id=m.action_id,
-        boxer_id=m.boxer_id,
+        athlete_id=m.athlete_id,
         position_x=m.position_x,
         position_y=m.position_y,
         node_type=m.node_type or "strategy",
@@ -94,8 +94,8 @@ def _enrich_node(node: Node) -> NodeEnriched:
         return enriched
     if node.action_id:
         enriched.action = resolver.resolve_action(node.action_id)
-    if node.boxer_id:
-        enriched.boxer = resolver.resolve_athlete(node.boxer_id)
+    if node.athlete_id:
+        enriched.boxer = resolver.resolve_athlete(node.athlete_id)
     return enriched
 
 

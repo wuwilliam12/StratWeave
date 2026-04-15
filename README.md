@@ -41,3 +41,16 @@ ML:
 Hosting:
 - Vercel
 - AWS
+
+## Developer Housekeeping
+
+Use these targets from the repo root:
+
+- `make check` - Full CI-style gate (`check-format`, `lint`, `typecheck`, `test`)
+- `make format` - Apply formatting for frontend and backend
+- `make lint` - Run frontend lint and backend lint (if `ruff` is installed)
+- `make typecheck` - Run TypeScript checks (`tsc --noEmit`)
+- `make test` - Run backend and frontend tests
+- `make audit` - Run Node and Python dependency audits (Python audit runs if `pip-audit` is installed)
+- `make clean` - Remove caches/artifacts only
+- `make distclean` - Remove caches/artifacts and frontend dependencies (`node_modules`)
