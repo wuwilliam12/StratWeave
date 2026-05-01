@@ -1,16 +1,20 @@
 # StratWeave - Frontend & Backend targets
 
-.PHONY: help install install-frontend install-backend frontend backend dev build build-frontend build-backend lint lint-frontend lint-backend format check-format typecheck test test-ci test-backend test-frontend audit check clean distclean
+.PHONY: help install install-frontend install-backend install-mobile frontend backend mobile mobile-android mobile-web dev build build-frontend build-backend lint lint-frontend lint-backend format check-format typecheck test test-ci test-backend test-frontend audit check clean distclean
 
 help:
 	@echo "StratWeave - Available commands:"
 	@echo "  make install           - Install all dependencies"
 	@echo "  make install-backend   - Install backend dependencies"
 	@echo "  make install-frontend  - Install frontend dependencies"
+	@echo "  make install-mobile    - Install mobile dependencies"
 	@echo ""
 	@echo "  make dev               - Run both backend and frontend in parallel"
 	@echo "  make backend           - Run backend (FastAPI) on port 8000"
 	@echo "  make frontend          - Run frontend (Next.js) on port 3000"
+	@echo "  make mobile            - Run mobile app dev server (Expo)"
+	@echo "  make mobile-android    - Run mobile app on Android via Expo"
+	@echo "  make mobile-web        - Run mobile app in browser via Expo"
 	@echo ""
 	@echo "  make build             - Build for production (frontend + backend)"
 	@echo "  make build-frontend    - Build frontend for production"
@@ -31,13 +35,16 @@ help:
 	@echo "  make distclean         - Remove artifacts, caches, and dependencies"
 
 # Installation targets
-install: install-backend install-frontend
+install: install-backend install-frontend install-mobile
 
 install-backend:
 	cd backend && pip install -r requirements.txt
 
 install-frontend:
 	cd frontend/strategy-weave && npm install
+
+install-mobile:
+	cd mobile && npm install
 
 # Development targets
 # Run backend (FastAPI + uvicorn) - default port 8000
@@ -47,6 +54,16 @@ backend:
 # Run frontend (Next.js) - default port 3000
 frontend:
 	cd frontend/strategy-weave && npm run dev
+
+# Run mobile (Expo)
+mobile:
+	cd mobile && npm run start
+
+mobile-android:
+	cd mobile && npm run android
+
+mobile-web:
+	cd mobile && npm run web
 
 # Run both in parallel (open two terminals, or: make -j2 backend frontend)
 dev: backend frontend
