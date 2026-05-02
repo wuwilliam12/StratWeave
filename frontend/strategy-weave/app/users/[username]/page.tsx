@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -27,30 +27,40 @@ export default function UserProfilePage() {
   const [error, setError] = useState("");
   const [selectedSection, setSelectedSection] = useState<SectionKey>("overview");
 
-  const fetchUser = useCallback(async () => {
-    try {
-      const response = await fetch(`http://localhost:8000/api/auth/users/${username}`);
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else if (response.status === 404) {
-        setError("User not found");
-      } else {
-        setError("Failed to load profile");
-      }
-    } catch {
-      setError("Network error");
-    } finally {
-      setLoading(false);
-    }
-  }, [username]);
-
   useEffect(() => {
-    if (username) {
-      fetchUser();
-    }
-  }, [username, fetchUser]);
+    if (!username) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/auth/users/${username}`);
+
+        if (cancelled) return;
+
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else if (response.status === 404) {
+          setError("User not found");
+        } else {
+          setError("Failed to load profile");
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Network error");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [username]);
 
   if (loading) {
     return (

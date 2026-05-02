@@ -159,7 +159,7 @@ function mergeFrontendNodeData(
 
 export default function GraphEditor({ graphId }: { graphId?: string }) {
   const router = useRouter();
-  const { currentGraph, openGraph, saveGraph: saveGraphContext, loading: contextLoading, error: contextError } = useGraph();
+  const { currentGraph, openGraph, saveGraph: saveGraphContext } = useGraph();
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
   const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import BlueprintStyleLibrary from "@/features/blueprints/components/BlueprintStyleLibrary";
 import GraphHierarchySkeleton from "@/features/flow/components/nodes/GraphHierarchySkeleton";
@@ -36,15 +36,11 @@ const launchPads = [
 
 export default function HomePage() {
   const { graphs, fetchGraphs, loading } = useGraph();
-  const [recentGraphs, setRecentGraphs] = useState<typeof graphs>([]);
+  const recentGraphs = useMemo(() => graphs.slice(0, 3), [graphs]);
 
   useEffect(() => {
     fetchGraphs(false);
   }, [fetchGraphs]);
-
-  useEffect(() => {
-    setRecentGraphs(graphs.slice(0, 3));
-  }, [graphs]);
 
   return (
     <main className="min-h-dvh px-6 py-8 sm:px-10 lg:px-16">

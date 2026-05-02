@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   createBagItemInBagBySport,
   deleteBagItemBySport,
@@ -45,7 +45,7 @@ export default function BagManager({
     learned_at: new Date().toISOString().slice(0, 10),
   });
 
-  const loadBag = async () => {
+  const loadBag = useCallback(async () => {
     if (initialItems) return; // Already have initial items
     setLoading(true);
     setError(null);
@@ -57,11 +57,13 @@ export default function BagManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [initialItems, bag, sport]);
 
   useEffect(() => {
-    loadBag();
-  }, [bag?.id, sport]);
+    queueMicrotask(() => {
+      void loadBag();
+    });
+  }, [loadBag]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -75,7 +77,7 @@ export default function BagManager({
     }
     setError(null);
     try {
-      const newItem = await createBagItemInBagBySport(sport, bag.id!, {
+      await createBagItemInBagBySport(sport, bag.id!, {
         name: draft.name.trim(),
         description: draft.description?.trim() ?? "",
         group: draft.group?.trim() || "Ungrouped",

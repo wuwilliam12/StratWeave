@@ -37,10 +37,6 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -72,6 +68,10 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void fetchUser();
+  }, []);
 
   const handleUpdateProfile = async () => {
     setUpdating(true);
