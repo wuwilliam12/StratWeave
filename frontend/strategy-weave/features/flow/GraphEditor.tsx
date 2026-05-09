@@ -33,6 +33,7 @@ import {
 } from "./components";
 import type { NodePaletteItem } from "./components";
 import type { FlowEdgeData, FlowNodeData } from "@/lib/graphConvert";
+import { projectGraphForMode, type GraphMode } from "./lib/graphModes";
 
 const defaultNodes: Node[] = [
   {
@@ -171,6 +172,7 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
   const [explorerSearch, setExplorerSearch] = useState("");
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [graphMode, setGraphMode] = useState<GraphMode>("state");
 
   const markDirty = useCallback(() => setDirty(true), []);
   const handleOpenNodeEditor = useCallback((nodeId: string) => {
@@ -497,6 +499,35 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
   const selectedNodeIds = new Set(
     nodes.filter((n) => n.selected).map((n) => n.id),
   );
+  const projectedGraph = useMemo(
+    () => projectGraphForMode(nodes, edges, graphMode),
+    [nodes, edges, graphMode],
+  );
+  const coverageWarnings = useMemo(() => {
+    const outgoingByNode = new Map<string, number>();
+    for (const edge of edges) {
+      outgoingByNode.set(edge.source, (outgoingByNode.get(edge.source) ?? 0) + 1);
+    }
+
+    const items: string[] = [];
+    for (const node of nodes) {
+      const data = (node.data ?? {}) as FlowNodeData;
+      const outgoing = outgoingByNode.get(node.id) ?? 0;
+      const title = data.label?.trim() || node.id;
+      if (outgoing === 0) {
+        items.push(`Dead end: "${title}" has no outgoing transitions.`);
+      }
+      if (data.nodeType === "state" && outgoing === 0) {
+        items.push(`Uncovered state: "${title}" has no defined response.`);
+      }
+      if (data.nodeType === "decision" && outgoing < 2) {
+        items.push(`Weak branching: decision "${title}" has fewer than two branches.`);
+      }
+    }
+
+    // Deduplicate in case a state also appears as a dead-end warning.
+    return [...new Set(items)];
+  }, [nodes, edges]);
   const editingEdge =
     edges.find((edge) => edge.id === editingEdgeId) ?? null;
   const editingNode =
@@ -519,10 +550,38 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
       {/* Control bar - top row */}
       <ControlBar
         title="Strategy graph editor"
-        subtitle={`${sport.label} · ${nodes.length} nodes · ${edges.length} edges`}
+        subtitle={`${sport.label} · ${graphMode === "state" ? "State→Action→State" : "Action→Action"} · ${projectedGraph.nodes.length} nodes · ${projectedGraph.edges.length} edges`}
         homeLabel="Back home"
         onHomeReturn={() => router.push("/home")}
-        trailingSlot={<SportSelector />}
+        trailingSlot={
+          <div className="flex items-center gap-2">
+            <SportSelector />
+            <div className="flex items-center rounded-full border border-border bg-surface p-1 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setGraphMode("action")}
+                className={`rounded-full px-3 py-1 transition ${
+                  graphMode === "action"
+                    ? "bg-accent text-white"
+                    : "text-muted hover:bg-surface-strong"
+                }`}
+              >
+                Action
+              </button>
+              <button
+                type="button"
+                onClick={() => setGraphMode("state")}
+                className={`rounded-full px-3 py-1 transition ${
+                  graphMode === "state"
+                    ? "bg-accent text-white"
+                    : "text-muted hover:bg-surface-strong"
+                }`}
+              >
+                State
+              </button>
+            </div>
+          </div>
+        }
         fileActions={[
           { label: "Import soon", disabled: true, tone: "muted" },
           { label: "Export soon", disabled: true, tone: "muted" },
@@ -543,19 +602,21 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
       <div className="flex flex-1 min-h-0">
         {/* Left column - Palette/Explorer*/}
         <SideBar
-          nodes={nodes}
-          edges={edges}
+          nodes={projectedGraph.nodes}
+          edges={projectedGraph.edges}
           selectedNodeIds={selectedNodeIds}
           onSelectNode={handleSelectNodeInExplorer}
           search={explorerSearch}
           onSearchChange={setExplorerSearch}
           onSelectPaletteItem={handleAddNodeFromPalette}
+          warnings={coverageWarnings}
         />
 
         <GraphCanvas
-          nodes={nodes}
+          nodes={projectedGraph.nodes}
           allNodes={nodes}
-          edges={edges}
+          edges={projectedGraph.edges}
+          allEdges={edges}
           edgeTypes={edgeTypes}
           nodeTypes={nodeTypes}
           editingEdge={editingEdge}

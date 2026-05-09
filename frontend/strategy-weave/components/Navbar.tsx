@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useSport } from "@/contexts/SportContext";
 import SportSelector from "@/components/SportSelector";
 
@@ -29,8 +30,11 @@ export default function Navbar({
 }: NavbarProps) {
   const { sport } = useSport();
   const resolvedSubtitle = subtitle ?? sport.navSubtitle;
-  const isLoggedIn =
-    typeof window !== "undefined" && !!localStorage.getItem("token");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("token"));
+  }, []);
 
   const loggedInNavItems = isLoggedIn
     ? [...navItems, { href: "/profile", label: "Profile" }]

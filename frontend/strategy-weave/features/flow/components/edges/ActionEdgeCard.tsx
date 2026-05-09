@@ -33,6 +33,7 @@ export default function ActionEdgeCard({
   });
 
   const label = data?.label?.trim() || "Action";
+  const isDerived = data?.derived === true;
 
   return (
     <>
@@ -41,8 +42,9 @@ export default function ActionEdgeCard({
         path={edgePath}
         markerEnd={markerEnd}
         style={{
-          stroke: selected ? "#0f172a" : "#64748b",
+          stroke: isDerived ? "#94a3b8" : selected ? "#0f172a" : "#64748b",
           strokeWidth: selected ? 2.5 : 2,
+          strokeDasharray: isDerived ? "6 4" : undefined,
           ...style,
         }}
       />
@@ -62,7 +64,7 @@ export default function ActionEdgeCard({
             ].join(" ")}
           >
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Action
+              {isDerived ? "Derived" : "Action"}
             </div>
             <div className="mt-1 text-xs font-medium text-slate-700 dark:text-slate-200">
               {label}

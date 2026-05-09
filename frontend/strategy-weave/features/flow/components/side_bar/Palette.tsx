@@ -80,22 +80,24 @@ export default function Palette({
   }, {});
 
   const allItems = [...items, ...actionItems, ...bagItemsForPalette];
+  const decisionItems = allItems.filter((item) => item.nodeType === "decision");
+  const nonDecisionItems = allItems.filter((item) => item.nodeType !== "decision");
 
   return (
     <div className="flex flex-col gap-1 bg-transparent p-2">
       {title ? (
-        <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
           {title}
         </h3>
       ) : null}
       {Object.keys(bagGroups).length > 0 ? (
-        <section className="border-b border-gray-200 pb-2 dark:border-gray-700">
-          <h4 className="px-1 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+        <section className="border-b border-border pb-2">
+          <h4 className="px-1 text-xs font-semibold uppercase tracking-wide text-accent">
             Bag / Training Tools
           </h4>
           {Object.entries(bagGroups).map(([group, items]) => (
             <div key={group} className="mt-1">
-              <p className="px-1 text-[11px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{group}</p>
+              <p className="px-1 text-[11px] font-medium uppercase tracking-wider text-muted">{group}</p>
               <ul className="scrollbar-none flex flex-col gap-0.5" role="listbox">
                 {items.map((bag) => (
                   <li key={bag.id ?? bag.name}>
@@ -112,7 +114,7 @@ export default function Palette({
                           athleteRole: "neutral",
                         })
                       }
-                      className="w-full rounded-xl px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-800"
+                      className="w-full rounded-xl px-2 py-1.5 text-left text-sm transition hover:bg-surface-strong"
                       role="option"
                       aria-selected="false"
                     >
@@ -126,13 +128,36 @@ export default function Palette({
         </section>
       ) : null}
 
+      {decisionItems.length > 0 ? (
+        <section className="border-b border-border pb-2">
+          <h4 className="px-1 text-xs font-semibold uppercase tracking-wide text-accent">
+            Decision Branching
+          </h4>
+          <ul className="scrollbar-none mt-1 flex flex-col gap-0.5" role="listbox">
+            {decisionItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelect?.(item)}
+                  className="w-full rounded-xl border border-border bg-surface-strong px-2 py-1.5 text-left text-sm font-medium transition hover:bg-surface"
+                  role="option"
+                  aria-selected="false"
+                >
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <ul className="scrollbar-none flex flex-col gap-0.5 overflow-y-auto" role="listbox">
-        {allItems.map((item) => (
+        {nonDecisionItems.map((item) => (
           <li key={item.id}>
             <button
               type="button"
               onClick={() => onSelect?.(item)}
-              className="w-full rounded-xl px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-800"
+              className="w-full rounded-xl px-2 py-1.5 text-left text-sm transition hover:bg-surface-strong"
               role="option"
               aria-selected="false"
             >

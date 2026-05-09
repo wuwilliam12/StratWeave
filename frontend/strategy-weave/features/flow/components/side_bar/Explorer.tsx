@@ -78,19 +78,19 @@ export default function Explorer({
         <button
           type="button"
           onClick={() => onSelectNode?.(node.id)}
-          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-600 ${
-            isSelected ? "bg-gray-200 dark:bg-gray-600" : ""
+          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm transition hover:bg-surface-strong ${
+            isSelected ? "bg-surface-strong" : ""
           }`}
           style={{ paddingLeft: `${depth * 14 + 8}px` }}
         >
           <span className="truncate">{getNodeHierarchyLabel(node) || "(unnamed)"}</span>
-          <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-muted">
             {getNodeHierarchyType(node)}
           </span>
         </button>
 
         {children.length > 0 && (
-          <ul className="border-l border-gray-200 pl-1 dark:border-gray-700">
+          <ul className="border-l border-border pl-1">
             {children.map((child) => renderTree(child, depth + 1))}
           </ul>
         )}
@@ -105,9 +105,9 @@ export default function Explorer({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-transparent">
-      <div className="border-b border-gray-200 p-2 dark:border-gray-700">
+      <div className="border-b border-border p-2">
         {title ? (
-          <h2 className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
+          <h2 className="mb-2 text-sm font-semibold text-foreground">
             {title}
           </h2>
         ) : null}
@@ -117,14 +117,14 @@ export default function Explorer({
             placeholder="Search nodes..."
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+            className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-foreground outline-none transition focus:border-accent"
             aria-label="Search nodes"
           />
         )}
       </div>
       <ul className="scrollbar-none min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2" role="list">
         {!hasVisibleNodes ? (
-          <li className="py-2 text-center text-sm text-gray-500">
+          <li className="py-2 text-center text-sm text-muted">
             {nodes.length === 0 ? "No nodes" : "No matches"}
           </li>
         ) : (
@@ -136,8 +136,8 @@ export default function Explorer({
         )}
       </ul>
       {edges.length > 0 && (
-        <div className="border-t border-gray-200 px-2 py-1 text-xs text-gray-500 dark:border-gray-700">
-          {nodes.length} nodes - {edges.length} edges
+        <div className="border-t border-border px-2 py-1 text-xs text-muted">
+          {nodes.length} nodes · {edges.length} edges
         </div>
       )}
     </div>

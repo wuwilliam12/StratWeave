@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { Node } from "reactflow";
+import type { Edge, Node } from "reactflow";
 import type { FlowNodeData } from "@/lib/graphConvert";
 import { getNodeHierarchyLabel, getNodeParentId } from "@/lib/graphHierarchy";
 import { FLOW_NODE_TYPE_OPTIONS } from "../nodes/nodeTypes";
@@ -16,6 +16,7 @@ type FlowNodePatch = Partial<
 export interface NodeInspectorProps {
   node: Node<FlowNodeData> | null;
   nodes?: Node<FlowNodeData>[];
+  edges?: Edge[];
   onClose?: () => void;
   onChange?: (nodeId: string, patch: FlowNodePatch) => void;
 }
@@ -25,6 +26,7 @@ export type NodeEditorPanelProps = NodeInspectorProps;
 export default function NodeInspector({
   node,
   nodes = [],
+  edges = [],
   onClose,
   onChange,
 }: NodeInspectorProps) {
@@ -53,6 +55,8 @@ export default function NodeInspector({
   const parentOptions = nodes.filter(
     (candidate) => candidate.id !== node.id && !wouldCreateCycle(candidate.id),
   );
+  const outgoingBranchCount = edges.filter((edge) => edge.source === node.id).length;
+  const isDecisionNode = (data.nodeType ?? "node") === "decision";
 
   return (
     <aside className="absolute right-4 top-4 z-30 w-[320px] rounded-3xl border border-black/10 bg-[color:var(--color-surface-strong)] p-4 shadow-2xl backdrop-blur">
@@ -86,6 +90,21 @@ export default function NodeInspector({
             className="mt-1 w-full rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm outline-none transition focus:border-[color:var(--color-accent)]"
           />
         </label>
+
+        {isDecisionNode ? (
+          <div className="rounded-2xl border border-black/10 bg-white/55 p-3 text-xs text-[color:var(--color-muted)]">
+            <div className="font-semibold text-[color:var(--color-foreground)]">
+              Decision branching
+            </div>
+            <div className="mt-1">
+              Use this node as your if/then prompt, then label each outgoing edge with the branch response.
+            </div>
+            <div className="mt-1">
+              Outgoing branches: {outgoingBranchCount}
+              {outgoingBranchCount < 2 ? " (add at least 2 for real branching)" : ""}
+            </div>
+          </div>
+        ) : null}
 
         <label className="block text-sm font-medium text-[color:var(--color-foreground)]">
           Type

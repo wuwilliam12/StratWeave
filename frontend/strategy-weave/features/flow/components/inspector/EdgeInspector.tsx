@@ -44,12 +44,13 @@ export default function EdgeInspector({
 
       <div className="mt-4 space-y-4">
         <label className="block text-sm font-medium text-[color:var(--color-foreground)]">
-          Action label
+          Branch / action label
           <input
             type="text"
             value={data.label ?? ""}
             onChange={(event) => onChange?.(edge.id, { label: event.target.value })}
             className="mt-1 w-full rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm outline-none transition focus:border-[color:var(--color-accent)]"
+            placeholder='Example: "pivot left" or "establish jab"'
           />
         </label>
 

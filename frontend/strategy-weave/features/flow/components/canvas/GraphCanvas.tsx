@@ -54,6 +54,7 @@ export interface GraphCanvasProps {
   nodes: Node[];
   allNodes?: Node[];
   edges: Edge[];
+  allEdges?: Edge[];
   edgeTypes?: EdgeTypes;
   nodeTypes: NodeTypes;
   editingEdge: Edge<FlowEdgeData> | null;
@@ -86,6 +87,7 @@ export default function GraphCanvas({
   nodes,
   allNodes,
   edges,
+  allEdges,
   edgeTypes,
   nodeTypes,
   editingEdge,
@@ -131,15 +133,15 @@ export default function GraphCanvas({
   };
 
   return (
-    <main className="relative flex flex-1 flex-col overflow-hidden bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+    <main className="relative flex flex-1 flex-col overflow-hidden bg-background">
+      <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3">
         <div>
-          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <div className="text-sm font-semibold text-foreground">
             {title}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</div>
+          <div className="text-xs text-muted">{subtitle}</div>
         </div>
-        <div className="rounded-full border border-gray-200 bg-white/70 px-3 py-1 text-xs text-gray-500 dark:border-gray-700 dark:bg-slate-900/70 dark:text-gray-400">
+        <div className="rounded-full border border-border bg-surface-strong px-3 py-1 text-xs text-muted">
           {nodes.length} nodes
         </div>
       </div>
@@ -163,7 +165,11 @@ export default function GraphCanvas({
             setNodeMenu({ node, x: event.clientX, y: event.clientY });
             setCanvasMenu(null);
           }}
-          onEdgeClick={(_, edge) => onEditEdge(edge.id)}
+          onEdgeClick={(_, edge) => {
+            const edgeData = (edge.data ?? {}) as FlowEdgeData;
+            if (edgeData.derived) return;
+            onEditEdge(edge.id);
+          }}
           fitView
         >
           <CanvasHelpers
@@ -209,6 +215,7 @@ export default function GraphCanvas({
         <NodeInspector
           node={editingNode}
           nodes={allNodes ?? nodes}
+          edges={allEdges ?? edges}
           onClose={onCloseInspector}
           onChange={onChangeNode}
         />

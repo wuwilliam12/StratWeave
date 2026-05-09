@@ -22,9 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <Script id="stratweave-sport-boot" strategy="beforeInteractive">
-          {sportBootScript}
-        </Script>
+        <Script
+          id="stratweave-sport-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: sportBootScript }}
+        />
         <SportProvider>
           <GraphProvider>{children}</GraphProvider>
         </SportProvider>

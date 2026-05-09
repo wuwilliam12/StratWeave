@@ -29,6 +29,7 @@ export interface FlowEdgeData {
   label?: string;
   probability?: number | null;
   staminaCost?: number | null;
+  derived?: boolean;
 }
 
 /* Convert API nodes to React Flow nodes */
