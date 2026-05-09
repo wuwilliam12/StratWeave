@@ -2,8 +2,8 @@
 SQLAlchemy models for persistent storage.
 Mirror api.models.graph (Node, Edge) for the graph feature.
 """
-from sqlalchemy import String, Float, Text, Boolean, DateTime, ForeignKey, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import String, Float, Text, Boolean, DateTime, ForeignKey, func, JSON
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -39,9 +39,11 @@ class NodeModel(Base):
     graph_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     parent_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     label: Mapped[str] = mapped_column(Text, nullable=False)
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)
     sport: Mapped[str | None] = mapped_column(String(32), nullable=True)
     action_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     athlete_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    athlete_role: Mapped[str | None] = mapped_column(String(32), nullable=True)
     position_x: Mapped[float] = mapped_column(Float, default=0)
     position_y: Mapped[float] = mapped_column(Float, default=0)
     node_type: Mapped[str] = mapped_column(String(64), default="strategy")
@@ -57,3 +59,87 @@ class EdgeModel(Base):
     label: Mapped[str] = mapped_column(Text, default="")
     probability: Mapped[float] = mapped_column(Float, default=1.0)
     stamina_cost: Mapped[float] = mapped_column(Float, default=0)
+
+
+class TrainingBagModel(Base):
+    __tablename__ = "training_bags"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
+    sport: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    items: Mapped[list["TrainingItemModel"]] = relationship(
+        "TrainingItemModel",
+        back_populates="bag",
+        cascade="all, delete-orphan",
+    )
+
+
+class TrainingItemModel(Base):
+    __tablename__ = "training_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    bag_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("training_bags.id"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(300), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    item_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    entity_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    group: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    reference_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mastery: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    learned_at: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    last_practiced: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    tags: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    notes: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    bag: Mapped["TrainingBagModel"] = relationship(
+        "TrainingBagModel", back_populates="items"
+    )
+
+
+class TapeEntryModel(Base):
+    """Film study / external link with notes (Tape v0)."""
+
+    __tablename__ = "tape_entries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    sport: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    tags: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class TrainingSessionModel(Base):
+    """Gym session / daily focus (Headgear v0)."""
+
+    __tablename__ = "training_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    session_date: Mapped[str] = mapped_column(String(32), nullable=False)
+    focus: Mapped[str] = mapped_column(Text, nullable=False)
+    sport: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    graph_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

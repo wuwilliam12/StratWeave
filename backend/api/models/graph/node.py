@@ -14,6 +14,8 @@ class Node(BaseModel):
     # Resolved later
     action_id: str | None = None
     athlete_id: str | None = None
+    athlete_role: str | None = None
+    details: str | None = None
 
     position_x: float = 0
     position_y: float = 0

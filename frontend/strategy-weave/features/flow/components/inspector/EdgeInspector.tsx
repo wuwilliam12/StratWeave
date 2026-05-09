@@ -43,6 +43,18 @@ export default function EdgeInspector({
       </div>
 
       <div className="mt-4 space-y-4">
+        <div className="rounded-2xl border border-black/10 bg-white/55 p-3 text-xs text-[color:var(--color-muted)]">
+          <div className="font-semibold text-[color:var(--color-foreground)]">
+            Conditional branches
+          </div>
+          <div className="mt-1">
+            Pair a <span className="font-medium">decision</span> node with outgoing edges whose labels read
+            like the condition (e.g. &quot;If opponent pressures&quot;) and the response (e.g. &quot;pivot
+            left&quot; vs &quot;establish jab&quot;). Use probability when you want rough likelihood, not
+            hard logic.
+          </div>
+        </div>
+
         <label className="block text-sm font-medium text-[color:var(--color-foreground)]">
           Branch / action label
           <input

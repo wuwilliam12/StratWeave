@@ -21,6 +21,9 @@ const navItems: NavItem[] = [
   { href: "/home", label: "Home" },
   { href: "/graphs", label: "My Graphs" },
   { href: "/graph_editor", label: "Editor" },
+  { href: "/bags", label: "Bags" },
+  { href: "/tape", label: "Tape" },
+  { href: "/headgear", label: "Headgear" },
 ];
 
 export default function Navbar({

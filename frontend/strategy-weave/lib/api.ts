@@ -13,12 +13,19 @@ const API_BASE =
     ? (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api")
     : "";
 
+function authHeaders(): HeadersInit {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 /* Generic API fetch call wrapper */
 async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),
       ...options?.headers,
     },
   });
@@ -59,7 +66,7 @@ export interface TrainingBag {
   id: string | null;
   name: string;
   description?: string;
-  owner_id: string;
+  owner_id: number | null;
   is_public: boolean;
   sport?: string;
   created_at?: string;
@@ -81,7 +88,7 @@ function createBagPath(sport: string): string {
  * Fetch all public bags for a sport.
  */
 export async function fetchPublicBagsBySport(sport: string): Promise<TrainingBag[]> {
-  return fetchApi<TrainingBag[]>(`${createBagPath(sport)}/bags/`);
+  return fetchApi<TrainingBag[]>(`${createBagPath(sport)}/bags/public/`);
 }
 
 /**
@@ -238,13 +245,13 @@ export interface Bag {
   id: string | null;
   name: string;
   description?: string;
-  owner_id: string;
+  owner_id: number | null;
   is_public: boolean;
   created_at?: string;
 }
 
 export async function fetchPublicBags(): Promise<Bag[]> {
-  return fetchApi<Bag[]>("/boxing/bag/bags/");
+  return fetchApi<Bag[]>("/boxing/bag/bags/public/");
 }
 
 export async function fetchBag(bagId: string): Promise<Bag> {

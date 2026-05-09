@@ -9,9 +9,11 @@ export interface Node {
   graph_id?: string;
   parent_id?: string | null;
   label: string;
+  details?: string | null;
   sport?: string | null;
   action_id?: string | null;
   athlete_id?: string | null;
+  athlete_role?: string | null;
   position_x: number;
   position_y: number;
   node_type: string;

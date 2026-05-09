@@ -33,7 +33,17 @@ import {
 } from "./components";
 import type { NodePaletteItem } from "./components";
 import type { FlowEdgeData, FlowNodeData } from "@/lib/graphConvert";
-import { projectGraphForMode, type GraphMode } from "./lib/graphModes";
+import {
+  projectGraphForMode,
+  isDerivedActionProjectionEdgeId,
+  type GraphMode,
+} from "./lib/graphModes";
+import StatWeaverPanel from "./components/StatWeaverPanel";
+import {
+  fetchGraphSuggestions,
+  nodesEdgesForAiSnapshot,
+  type GraphSuggestResponse,
+} from "@/lib/graphAiApi";
 
 const defaultNodes: Node[] = [
   {
@@ -173,6 +183,11 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [graphMode, setGraphMode] = useState<GraphMode>("state");
+  const [statWeaverOpen, setStatWeaverOpen] = useState(false);
+  const [statWeaverLoading, setStatWeaverLoading] = useState(false);
+  const [statWeaverError, setStatWeaverError] = useState<string | null>(null);
+  const [statWeaverResult, setStatWeaverResult] =
+    useState<GraphSuggestResponse | null>(null);
 
   const markDirty = useCallback(() => setDirty(true), []);
   const handleOpenNodeEditor = useCallback((nodeId: string) => {
@@ -219,8 +234,13 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
   );
   const onEdgesChangeWithDirty = useCallback(
     (changes: EdgeChange[]) => {
-      onEdgesChange(changes);
-      const hasDataChange = changes.some((c) => c.type !== "select");
+      const filtered = changes.filter((c) => {
+        if (!("id" in c) || typeof c.id !== "string") return true;
+        return !isDerivedActionProjectionEdgeId(c.id);
+      });
+      if (filtered.length === 0) return;
+      onEdgesChange(filtered);
+      const hasDataChange = filtered.some((c) => c.type !== "select");
       if (hasDataChange) markDirty();
     },
     [onEdgesChange, markDirty],
@@ -261,6 +281,7 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      if (graphMode === "action") return;
       setEdges((eds) =>
         addEdge(
           {
@@ -274,7 +295,7 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
       setEditingNodeId(null);
       markDirty();
     },
-    [setEdges, markDirty],
+    [graphMode, setEdges, markDirty],
   );
 
   const handleSave = useCallback(() => {
@@ -536,6 +557,28 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
   const controlBarStatus = error ?? (dirty ? "Unsaved" : "Saved");
   const { sport } = useSport();
 
+  const runStatWeaver = useCallback(async () => {
+    setStatWeaverLoading(true);
+    setStatWeaverError(null);
+    try {
+      const snap = nodesEdgesForAiSnapshot(nodes, edges);
+      const res = await fetchGraphSuggestions({
+        sport: sport.id,
+        mode: graphMode,
+        nodes: snap.nodes,
+        edges: snap.edges,
+      });
+      setStatWeaverResult(res);
+    } catch (e) {
+      setStatWeaverError(
+        e instanceof Error ? e.message : "StatWeaver request failed",
+      );
+      setStatWeaverResult(null);
+    } finally {
+      setStatWeaverLoading(false);
+    }
+  }, [nodes, edges, graphMode, sport.id]);
+
   /* Show loading indicator */
   if (loading) {
     return (
@@ -546,7 +589,7 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
   }
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="relative flex h-full w-full flex-col">
       {/* Control bar - top row */}
       <ControlBar
         title="Strategy graph editor"
@@ -586,6 +629,21 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
           { label: "Import soon", disabled: true, tone: "muted" },
           { label: "Export soon", disabled: true, tone: "muted" },
         ]}
+        aiActions={[
+          {
+            label: statWeaverOpen ? "Hide StatWeaver" : "StatWeaver",
+            onClick: () => {
+              setStatWeaverOpen((prev) => {
+                if (!prev) {
+                  queueMicrotask(() => {
+                    void runStatWeaver();
+                  });
+                }
+                return !prev;
+              });
+            },
+          },
+        ]}
         onAddNode={() => handleAddNode()}
         onDeleteSelected={handleDeleteSelected}
         onSave={handleSave}
@@ -612,28 +670,44 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
           warnings={coverageWarnings}
         />
 
-        <GraphCanvas
-          nodes={projectedGraph.nodes}
-          allNodes={nodes}
-          edges={projectedGraph.edges}
-          allEdges={edges}
-          edgeTypes={edgeTypes}
-          nodeTypes={nodeTypes}
-          editingEdge={editingEdge}
-          editingNode={editingNode}
-          onNodesChange={onNodesChangeWithDirty}
-          onEdgesChange={onEdgesChangeWithDirty}
-          onConnect={onConnect}
-          onAddNodeAtPosition={handleAddNode}
-          onEditEdge={handleOpenEdgeEditor}
-          onEditNode={handleOpenNodeEditor}
-          onDuplicateNode={handleDuplicateNode}
-          onDeleteNode={handleDeleteNode}
-          onCloseInspector={() => setEditingNodeId(null)}
-          onCloseEdgeInspector={() => setEditingEdgeId(null)}
-          onChangeEdge={handleUpdateEdge}
-          onChangeNode={handleUpdateNode}
-        />
+        <div className="relative min-h-0 flex-1">
+          <GraphCanvas
+            nodes={projectedGraph.nodes}
+            allNodes={nodes}
+            edges={projectedGraph.edges}
+            allEdges={edges}
+            allowNewConnections={graphMode === "state"}
+            subtitle={
+              graphMode === "action"
+                ? "Action mode: inferred flow (read-only links). Switch to State to connect nodes and edit branches."
+                : "Right-click to add nodes, connect branches, and inspect graph details."
+            }
+            edgeTypes={edgeTypes}
+            nodeTypes={nodeTypes}
+            editingEdge={editingEdge}
+            editingNode={editingNode}
+            onNodesChange={onNodesChangeWithDirty}
+            onEdgesChange={onEdgesChangeWithDirty}
+            onConnect={onConnect}
+            onAddNodeAtPosition={handleAddNode}
+            onEditEdge={handleOpenEdgeEditor}
+            onEditNode={handleOpenNodeEditor}
+            onDuplicateNode={handleDuplicateNode}
+            onDeleteNode={handleDeleteNode}
+            onCloseInspector={() => setEditingNodeId(null)}
+            onCloseEdgeInspector={() => setEditingEdgeId(null)}
+            onChangeEdge={handleUpdateEdge}
+            onChangeNode={handleUpdateNode}
+          />
+          <StatWeaverPanel
+            open={statWeaverOpen}
+            loading={statWeaverLoading}
+            error={statWeaverError}
+            result={statWeaverResult}
+            onClose={() => setStatWeaverOpen(false)}
+            onRefresh={() => void runStatWeaver()}
+          />
+        </div>
       </div>
     </div>
   );

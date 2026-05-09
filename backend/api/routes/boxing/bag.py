@@ -1,93 +1,106 @@
 """
-Boxing-specific bag routes.
-Uses the generic bag router factory to provide bag management for boxing training items.
+Boxing-specific bag routes (SQLAlchemy-backed).
 """
-from typing import List
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from ...models.boxing.bag import BoxingBagItem
 from ...models.boxing.bag_model import Bag
-from ...routes.bags import create_bag_router
+from ...routes.auth import get_current_user
+from ...routes.bags.router import create_bag_router
+from db import get_db
+from db.models import TrainingBagModel, TrainingItemModel, User
 
-# In-memory databases (replace with real DB later)
-bags_db: List[Bag] = [
-    Bag(
-        id="personal-bag",
+router = create_bag_router("boxing", Bag, BoxingBagItem)
+
+
+def _ensure_personal_boxing_bag(db: Session, user: User) -> TrainingBagModel:
+    bag = (
+        db.query(TrainingBagModel)
+        .filter(
+            TrainingBagModel.owner_id == user.id,
+            TrainingBagModel.sport == "boxing",
+            TrainingBagModel.name == "My Personal Bag",
+        )
+        .first()
+    )
+    if bag:
+        return bag
+    bag = TrainingBagModel(
+        id=str(uuid4()),
         name="My Personal Bag",
         description="Default personal training bag",
-        owner_id="user-1",  # Assuming a default user
+        owner_id=user.id,
         is_public=False,
-        created_at="2026-03-28",
-    ),
-    Bag(
-        id="ali-study",
-        name="Muhammad Ali Film Study",
-        description="Techniques and strategies from Muhammad Ali's fights",
-        owner_id="user-2",
-        is_public=True,
-        created_at="2026-03-27",
-    ),
-]
+        sport="boxing",
+    )
+    db.add(bag)
+    db.commit()
+    db.refresh(bag)
+    return bag
 
-bag_items_db: List[BoxingBagItem] = [
-    BoxingBagItem(
-        id="bag-1",
-        name="Double Jab to Cross",
-        description="Fundamental working combination drilled this week.",
-        entity_id="seed-jab",  # Maps to action_id
-        bag_id="personal-bag",
-        group="Weekly Focus",
-        source="CoachSession",
-        reference_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        mastery="intermediate",
-        learned_at="2026-03-27",
-    ),
-    BoxingBagItem(
-        id="bag-2",
-        name="Counter Hook after Slip",
-        description="Fight camp concept for counter gameplan.",
-        bag_id="personal-bag",
-        group="Fight Camp",
-        source="GamePlan",
-        reference_url="https://www.youtube.com/watch?v=example",
-        mastery="novice",
-        learned_at="2026-03-25",
-    ),
-    BoxingBagItem(
-        id="bag-3",
-        name="Ali's Footwork",
-        description="The legendary footwork that made Ali untouchable",
-        bag_id="ali-study",
-        group="Movement",
-        source="Film Study",
-        reference_url="https://www.youtube.com/watch?v=ali-footwork",
-        mastery="advanced",
-        learned_at="2026-03-26",
-    ),
-]
 
-# Create boxing-specific router using the generic factory
-router = create_bag_router(
-    sport="boxing",
-    bag_model=Bag,
-    item_model=BoxingBagItem,
-    bags_db=bags_db,
-    items_db=bag_items_db,
-)
+def _item_to_boxing(m: TrainingItemModel) -> BoxingBagItem:
+    return BoxingBagItem(
+        id=m.id,
+        name=m.name,
+        description=m.description,
+        item_type=m.item_type,
+        entity_id=m.entity_id,
+        bag_id=m.bag_id,
+        group=m.group,
+        source=m.source,
+        reference_url=m.reference_url,
+        mastery=m.mastery or "novice",
+        learned_at=m.learned_at,
+        last_practiced=m.last_practiced,
+        tags=m.tags if m.tags is not None else [],
+        notes=m.notes if m.notes is not None else {},
+    )
 
-# Legacy endpoints for backward compatibility (personal bag)
-# These are kept to avoid breaking existing code during transition
-@router.get("/", response_model=List[BoxingBagItem], summary="Get personal bag items (legacy)")
-def get_personal_bag_items():
-    """Legacy endpoint: get items from the default personal-bag."""
-    return [item for item in bag_items_db if item.bag_id == "personal-bag"]
+
+@router.get("/", response_model=list[BoxingBagItem], summary="Get personal bag items (legacy)")
+def get_personal_bag_items(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    bag = _ensure_personal_boxing_bag(db, current_user)
+    items = (
+        db.query(TrainingItemModel)
+        .filter(TrainingItemModel.bag_id == bag.id)
+        .order_by(TrainingItemModel.name)
+        .all()
+    )
+    return [_item_to_boxing(i) for i in items]
+
 
 @router.post("/", response_model=BoxingBagItem, summary="Add item to personal bag (legacy)")
-def create_personal_bag_item(item: BoxingBagItem):
-    """Legacy endpoint: add item to the default personal-bag."""
-    from uuid import uuid4
-    if not item.id:
-        item.id = str(uuid4())
-    item.bag_id = "personal-bag"
-    bag_items_db.append(item)
-    return item
-
+def create_personal_bag_item(
+    item: BoxingBagItem,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    bag = _ensure_personal_boxing_bag(db, current_user)
+    iid = item.id if item.id else str(uuid4())
+    m = TrainingItemModel(
+        id=iid,
+        bag_id=bag.id,
+        name=item.name,
+        description=item.description,
+        item_type=item.item_type,
+        entity_id=item.entity_id,
+        group=item.group,
+        source=item.source,
+        reference_url=item.reference_url,
+        mastery=item.mastery,
+        learned_at=item.learned_at,
+        last_practiced=item.last_practiced,
+        tags=item.tags,
+        notes=item.notes,
+    )
+    db.add(m)
+    db.commit()
+    db.refresh(m)
+    return _item_to_boxing(m)

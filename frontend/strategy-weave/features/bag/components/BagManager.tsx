@@ -35,7 +35,7 @@ export default function BagManager({
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name");
-  const [draft, setDraft] = useState<Partial<TrainingItem>>({
+  const [draft, setDraft] = useState<Partial<TrainingItem> & { tagsText?: string }>({
     name: "",
     description: "",
     group: "",
@@ -43,6 +43,7 @@ export default function BagManager({
     reference_url: "",
     mastery: "novice",
     learned_at: new Date().toISOString().slice(0, 10),
+    tagsText: "",
   });
 
   const loadBag = useCallback(async () => {
@@ -77,6 +78,11 @@ export default function BagManager({
     }
     setError(null);
     try {
+      const tags =
+        draft.tagsText
+          ?.split(",")
+          .map((t) => t.trim())
+          .filter(Boolean) ?? [];
       await createBagItemInBagBySport(sport, bag.id!, {
         name: draft.name.trim(),
         description: draft.description?.trim() ?? "",
@@ -85,6 +91,7 @@ export default function BagManager({
         reference_url: draft.reference_url?.trim() || undefined,
         mastery: draft.mastery || "novice",
         learned_at: draft.learned_at || new Date().toISOString().slice(0, 10),
+        tags: tags.length ? tags : undefined,
       } as TrainingItem);
       
       // Reset form
@@ -96,6 +103,7 @@ export default function BagManager({
         reference_url: "",
         mastery: "novice",
         learned_at: new Date().toISOString().slice(0, 10),
+        tagsText: "",
       });
       
       // Reload bag items to include the new one
@@ -120,11 +128,14 @@ export default function BagManager({
   const filteredItems = bagItems.filter((item) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
+    const tagMatch =
+      item.tags?.some((t) => t.toLowerCase().includes(query)) ?? false;
     return (
       item.name?.toLowerCase().includes(query) ||
       item.description?.toLowerCase().includes(query) ||
       item.group?.toLowerCase().includes(query) ||
-      item.source?.toLowerCase().includes(query)
+      item.source?.toLowerCase().includes(query) ||
+      tagMatch
     );
   });
 
@@ -213,6 +224,18 @@ export default function BagManager({
               onChange={(e) => setDraft((prev) => ({ ...prev, source: e.target.value }))}
               className="w-full rounded-md border border-gray-300 px-3 py-2"
               placeholder="Coach session, film study, practice"
+              disabled={!canEdit}
+            />
+          </label>
+          <label className="space-y-1 col-span-2">
+            <span className="text-sm font-medium">Tags</span>
+            <input
+              value={draft.tagsText || ""}
+              onChange={(e) =>
+                setDraft((prev) => ({ ...prev, tagsText: e.target.value }))
+              }
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="counter, footwork, defense (comma-separated)"
               disabled={!canEdit}
             />
           </label>
@@ -318,6 +341,18 @@ export default function BagManager({
                             <span className="text-xs text-gray-500">{item.mastery || "novice"}</span>
                           </div>
                           {item.description && <p className="mt-1 text-xs text-muted">{item.description}</p>}
+                          {item.tags && item.tags.length > 0 ? (
+                            <p className="mt-1 flex flex-wrap gap-1">
+                              {item.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="rounded-full bg-surface-strong px-2 py-0.5 text-[10px] font-medium text-muted"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </p>
+                          ) : null}
                           <p className="mt-1 text-xs text-muted">
                             {item.source || "source unknown"} • {item.learned_at || "date unknown"}
                           </p>

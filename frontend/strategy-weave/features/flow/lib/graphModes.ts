@@ -3,6 +3,11 @@ import type { FlowEdgeData, FlowNodeData } from "@/lib/graphConvert";
 
 export type GraphMode = "state" | "action";
 
+/** Synthetic edges in action mode; must not be persisted or edited as real edges. */
+export function isDerivedActionProjectionEdgeId(edgeId: string): boolean {
+  return edgeId.startsWith("derived-");
+}
+
 const ACTION_NODE_TYPE = "action";
 const STATE_NODE_TYPE = "state";
 
@@ -45,8 +50,9 @@ export function projectGraphForMode(
   const directEdges = edges.filter(
     (edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
   );
-  const inferredEdges: Edge[] = [];
-  const inferredEdgeKeys = new Set<string>();
+  const defaultEdgeType = edges.find((e) => e.type)?.type;
+  /** Parallel Action→…→Action paths between the same pair merge into one edge (labels joined). */
+  const inferredPathLabelsByPair = new Map<string, string[]>();
 
   for (const sourceNode of visibleNodes) {
     if (asNodeData(sourceNode).nodeType !== ACTION_NODE_TYPE) {
@@ -73,19 +79,13 @@ export function projectGraphForMode(
         const nextLabels = label ? [...current.labels, label] : current.labels;
 
         if (targetData.nodeType === ACTION_NODE_TYPE && targetNode.id !== sourceNode.id) {
-          const dedupeKey = `${sourceNode.id}:${targetNode.id}`;
-          if (!inferredEdgeKeys.has(dedupeKey)) {
-            inferredEdgeKeys.add(dedupeKey);
-            inferredEdges.push({
-              id: `derived-${sourceNode.id}-${targetNode.id}`,
-              source: sourceNode.id,
-              target: targetNode.id,
-              type: edge.type,
-              data: {
-                label: nextLabels.join(" -> "),
-                derived: true,
-              } as FlowEdgeData,
-            });
+          const pairKey = `${sourceNode.id}\0${targetNode.id}`;
+          const pathSummary =
+            nextLabels.length > 0 ? nextLabels.join(" → ") : "(via states)";
+          const bucket = inferredPathLabelsByPair.get(pairKey) ?? [];
+          if (!bucket.includes(pathSummary)) {
+            bucket.push(pathSummary);
+            inferredPathLabelsByPair.set(pairKey, bucket);
           }
           continue;
         }
@@ -99,6 +99,22 @@ export function projectGraphForMode(
         }
       }
     }
+  }
+
+  const inferredEdges: Edge[] = [];
+  for (const [pairKey, pathVariants] of inferredPathLabelsByPair) {
+    const [sourceId, targetId] = pairKey.split("\0");
+    const mergedLabel = pathVariants.join("  │  ");
+    inferredEdges.push({
+      id: `derived-${sourceId}-${targetId}`,
+      source: sourceId,
+      target: targetId,
+      type: defaultEdgeType,
+      data: {
+        label: mergedLabel,
+        derived: true,
+      } as FlowEdgeData,
+    });
   }
 
   const directEdgeIds = new Set(directEdges.map((edge) => `${edge.source}:${edge.target}`));

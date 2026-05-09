@@ -48,6 +48,10 @@ def _migrate_add_node_columns():
                         conn.execute(text("ALTER TABLE nodes ADD COLUMN parent_id VARCHAR(36)"))
                     if "graph_id" not in node_cols:
                         conn.execute(text("ALTER TABLE nodes ADD COLUMN graph_id VARCHAR(36)"))
+                    if "details" not in node_cols:
+                        conn.execute(text("ALTER TABLE nodes ADD COLUMN details TEXT"))
+                    if "athlete_role" not in node_cols:
+                        conn.execute(text("ALTER TABLE nodes ADD COLUMN athlete_role VARCHAR(32)"))
 
                 r = conn.execute(text("PRAGMA table_info(edges)"))
                 edge_cols = [row[1] for row in r.fetchall()]

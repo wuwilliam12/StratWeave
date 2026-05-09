@@ -39,13 +39,14 @@ export function toFlowNodes(apiNodes: GraphNode[]): Node[] {
     position: { x: n.position_x, y: n.position_y },
     data: {
       label: n.label,
+      details: n.details ?? "",
       nodeType: n.node_type ?? "node",
       strategy_id: n.strategy_id ?? null,
       parentId: n.parent_id ?? null,
       sport: n.sport ?? null,
       action_id: n.action_id ?? null,
       athlete_id: n.athlete_id ?? null,
-      athleteRole: null, // TODO: Add athlete_role to API
+      athleteRole: (n.athlete_role as FlowNodeData["athleteRole"]) ?? "neutral",
     } as FlowNodeData,
   }));
 }
@@ -80,31 +81,31 @@ export function toApiNodes(flowNodes: Node[]): GraphNode[] {
 
     return {
       id: n.id || undefined,
-      // Persist the main visible text; details stay frontend‑only for now.
       label: data.label ?? "",
+      details: data.details?.trim() ? data.details : null,
       position_x: n.position?.x ?? 0,
       position_y: n.position?.y ?? 0,
-      // TODO: once you introduce different node “kinds” (e.g. strategy vs
-      // detail vs edge‑label mini node), set `node_type` from data here.
-      // Keep hierarchy type on the node so Explorer and future views stay aligned.
       node_type: data.nodeType ?? "node",
       strategy_id: data.strategy_id ?? null,
       parent_id: data.parentId ?? null,
       sport: data.sport ?? null,
       action_id: data.action_id ?? null,
       athlete_id: data.athlete_id ?? null,
+      athlete_role: data.athleteRole ?? null,
     };
   });
 }
 
 /* Convert React Flow edges to API edges */
 export function toApiEdges(flowEdges: Edge[]): GraphEdge[] {
-  return flowEdges.map((e) => ({
-    id: e.id || undefined,
-    source: e.source,
-    target: e.target,
-    label: ((e.data as FlowEdgeData | undefined)?.label as string) ?? "",
-    probability: (e.data as FlowEdgeData | undefined)?.probability ?? undefined,
-    stamina_cost: (e.data as FlowEdgeData | undefined)?.staminaCost ?? undefined,
-  }));
+  return flowEdges
+    .filter((e) => e.id && !String(e.id).startsWith("derived-"))
+    .map((e) => ({
+      id: e.id || undefined,
+      source: e.source,
+      target: e.target,
+      label: ((e.data as FlowEdgeData | undefined)?.label as string) ?? "",
+      probability: (e.data as FlowEdgeData | undefined)?.probability ?? undefined,
+      stamina_cost: (e.data as FlowEdgeData | undefined)?.staminaCost ?? undefined,
+    }));
 }

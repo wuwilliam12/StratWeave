@@ -1,41 +1,27 @@
-from typing import Optional
+from typing import Any, Optional
+
+from pydantic import ConfigDict, model_validator
+
 from ..common.bag import TrainingItem
 
 
-# Boxing-specific convenience alias
-# Maps boxing terminology to generic TrainingItem
 class BoxingBagItem(TrainingItem):
     """
     Boxing-specific training item (technique, combination, footwork, etc).
-    Inherits from generic TrainingItem and provides boxing-specific defaults.
-    
-    In a boxing context:
-    - item_type: "technique", "combination", "footwork", etc.
-    - entity_id maps to action_id (e.g., "seed-jab")
-    - group categorizes by training focus (e.g., "Weekly Focus", "Fight Camp")
+    Request bodies may use `action_id`; it is normalized to `entity_id`.
     """
-    
-    # Boxing convenience: support "action_id" as alias for "entity_id"
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_action_id(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            aid = data.get("action_id")
+            if aid and not data.get("entity_id"):
+                return {**data, "entity_id": aid}
+        return data
+
     @property
     def action_id(self) -> Optional[str]:
         return self.entity_id
-    
-    @action_id.setter
-    def action_id(self, value: Optional[str]):
-        self.entity_id = value
-    
-    class Config:
-        # Allow schema to recognize action_id for backward compatibility
-        populate_by_name = True
-        json_schema_extra = {
-            "example": {
-                "id": "bag-1",
-                "name": "Double Jab to Cross",
-                "action_id": "seed-jab",
-                "bag_id": "personal-bag",
-                "group": "Weekly Focus",
-                "source": "CoachSession",
-                "mastery": "intermediate",
-                "learned_at": "2026-03-27"
-            }
-        }

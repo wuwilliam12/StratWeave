@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { fetchBag, fetchBagItemsByBag, type Bag, type BoxingBagItem } from "@/lib/api";
+import { fetchBag, type Bag } from "@/lib/api";
 import BagManager from "@/features/bag/components/BagManager";
 
 interface BagPageProps {
@@ -12,20 +12,16 @@ export default async function BagPage({ params }: BagPageProps) {
   const { bagId } = await params;
 
   let bag: Bag;
-  let items: BoxingBagItem[];
 
   try {
-    [bag, items] = await Promise.all([
-      fetchBag(bagId),
-      fetchBagItemsByBag(bagId),
-    ]);
+    bag = await fetchBag(bagId);
   } catch {
     notFound();
   }
 
   return (
     <main className="min-h-dvh p-6 sm:p-10">
-      <BagManager bag={bag} initialItems={items} />
+      <BagManager bag={bag} />
     </main>
   );
 }

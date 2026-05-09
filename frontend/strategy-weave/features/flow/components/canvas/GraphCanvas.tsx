@@ -51,6 +51,8 @@ function CanvasHelpers({
 export interface GraphCanvasProps {
   title?: string;
   subtitle?: string;
+  /** When false, users cannot draw new connections (e.g. action-mode flow view). */
+  allowNewConnections?: boolean;
   nodes: Node[];
   allNodes?: Node[];
   edges: Edge[];
@@ -84,6 +86,7 @@ export interface GraphCanvasProps {
 export default function GraphCanvas({
   title = "Canvas",
   subtitle = "Right-click to add nodes, connect branches, and inspect graph details.",
+  allowNewConnections = true,
   nodes,
   allNodes,
   edges,
@@ -152,9 +155,10 @@ export default function GraphCanvas({
           edges={edges}
           edgeTypes={edgeTypes}
           nodeTypes={nodeTypes}
+          nodesConnectable={allowNewConnections}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
+          onConnect={allowNewConnections ? onConnect : undefined}
           onPaneContextMenu={(event) => {
             event.preventDefault();
             setCanvasMenu({ x: event.clientX, y: event.clientY });
