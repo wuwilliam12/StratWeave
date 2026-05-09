@@ -17,6 +17,8 @@ export interface ControlBarProps extends ToolbarProps {
   fileActions?: ControlBarAction[];
   aiActions?: ControlBarAction[];
   accountActions?: ControlBarAction[];
+  /** e.g. sport theme picker — rendered before AI / Account groups */
+  trailingSlot?: React.ReactNode;
 }
 
 function ActionButton({
@@ -75,6 +77,7 @@ export default function ControlBar({
   fileActions = [],
   aiActions = [{ label: "AI tools soon", disabled: true, tone: "muted" }],
   accountActions = [{ label: "Account soon", disabled: true, tone: "muted" }],
+  trailingSlot,
   ...toolbarProps
 }: ControlBarProps) {
   return (
@@ -107,6 +110,12 @@ export default function ControlBar({
         <div className="min-w-[280px] flex-1">
           <Toolbar {...toolbarProps} />
         </div>
+
+        {trailingSlot ? (
+          <div className="flex shrink-0 items-center border-l border-gray-200 pl-3 dark:border-gray-700">
+            {trailingSlot}
+          </div>
+        ) : null}
 
         {/* Future AI Stuff */}
         <ActionGroup label="AI" actions={aiActions} />

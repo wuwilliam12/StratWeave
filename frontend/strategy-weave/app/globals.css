@@ -42,14 +42,69 @@
   }
 }
 
+/* Per-sport accent + grid tint (`data-sport` on `<html>`, see SportProvider). Boxing uses :root defaults above. */
+:root[data-sport="mma"] {
+  --accent: #c43c2e;
+  --accent-strong: #8f251a;
+  --grid: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+:root[data-sport="wrestling"] {
+  --accent: #2563ab;
+  --accent-strong: #1a4480;
+  --grid: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+:root[data-sport="judo-bjj"] {
+  --accent: #3d4f91;
+  --accent-strong: #2a3565;
+  --grid: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+:root[data-sport="kickboxing"] {
+  --accent: #b45309;
+  --accent-strong: #7c2d12;
+  --grid: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-sport="mma"] {
+    --accent: #e85d4c;
+    --accent-strong: #ffb199;
+    --grid: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+
+  :root[data-sport="wrestling"] {
+    --accent: #5b9fd8;
+    --accent-strong: #b8d9ff;
+    --grid: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+
+  :root[data-sport="judo-bjj"] {
+    --accent: #7c8fd4;
+    --accent-strong: #c9d4ff;
+    --grid: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+
+  :root[data-sport="kickboxing"] {
+    --accent: #e4a534;
+    --accent-strong: #f5d98a;
+    --grid: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
-  /* Soft gradients keep the empty shells from feeling flat. */
+  /* Soft gradients keep the empty shells from feeling flat; accent halo follows sport theme. */
   background:
-    radial-gradient(circle at top left, rgba(240, 141, 83, 0.2), transparent 28%),
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--accent) 28%, transparent),
+      transparent 28%
+    ),
     radial-gradient(circle at bottom right, rgba(99, 138, 112, 0.16), transparent 26%),
     linear-gradient(180deg, var(--background), color-mix(in srgb, var(--background) 82%, #ffffff 18%));
   min-height: 100%;

@@ -14,6 +14,8 @@ import {
 } from "reactflow";
 
 import { useGraph } from "@/contexts/GraphContext";
+import { useSport } from "@/contexts/SportContext";
+import SportSelector from "@/components/SportSelector";
 import {
   toFlowNodes,
   toFlowEdges,
@@ -501,6 +503,7 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
     nodes.find((node) => node.id === editingNodeId) ?? null;
 
   const controlBarStatus = error ?? (dirty ? "Unsaved" : "Saved");
+  const { sport } = useSport();
 
   /* Show loading indicator */
   if (loading) {
@@ -516,9 +519,10 @@ export default function GraphEditor({ graphId }: { graphId?: string }) {
       {/* Control bar - top row */}
       <ControlBar
         title="Strategy graph editor"
-        subtitle={`${nodes.length} nodes and ${edges.length} edges in the current working graph.`}
+        subtitle={`${sport.label} · ${nodes.length} nodes · ${edges.length} edges`}
         homeLabel="Back home"
         onHomeReturn={() => router.push("/home")}
+        trailingSlot={<SportSelector />}
         fileActions={[
           { label: "Import soon", disabled: true, tone: "muted" },
           { label: "Export soon", disabled: true, tone: "muted" },

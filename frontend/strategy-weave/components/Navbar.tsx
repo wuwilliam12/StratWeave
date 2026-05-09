@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useSport } from "@/contexts/SportContext";
+import SportSelector from "@/components/SportSelector";
 
 type NavItem = {
   href: string;
@@ -21,10 +23,12 @@ const navItems: NavItem[] = [
 ];
 
 export default function Navbar({
-  subtitle = "Strategy graphs for fighters, coaches, and systems thinkers.",
+  subtitle,
   primaryAction = { href: "/graph_editor", label: "Open editor" },
   secondaryAction = { href: "/home", label: "View home" },
 }: NavbarProps) {
+  const { sport } = useSport();
+  const resolvedSubtitle = subtitle ?? sport.navSubtitle;
   const isLoggedIn =
     typeof window !== "undefined" && !!localStorage.getItem("token");
 
@@ -41,7 +45,7 @@ export default function Navbar({
               StratWeave
             </p>
           </Link>
-          <p className="mt-2 max-w-xl text-sm text-muted">{subtitle}</p>
+          <p className="mt-2 max-w-xl text-sm text-muted">{resolvedSubtitle}</p>
         </div>
 
         <div className="flex flex-col gap-3 lg:items-end">
@@ -70,7 +74,8 @@ export default function Navbar({
           </nav>
 
           {/* Action slots let each page swap in its own primary CTA pair. */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <SportSelector />
             <Link
               href={secondaryAction.href}
               className="rounded-full border border-border bg-surface-strong px-4 py-2 text-sm font-medium transition hover:bg-white/60"
