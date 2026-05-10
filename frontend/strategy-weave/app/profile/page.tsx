@@ -70,7 +70,9 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    void fetchUser();
+    queueMicrotask(() => {
+      void fetchUser();
+    });
   }, []);
 
   const handleUpdateProfile = async () => {

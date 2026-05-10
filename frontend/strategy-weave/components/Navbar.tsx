@@ -36,7 +36,9 @@ export default function Navbar({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("token"));
+    queueMicrotask(() => {
+      setIsLoggedIn(!!localStorage.getItem("token"));
+    });
   }, []);
 
   const loggedInNavItems = isLoggedIn

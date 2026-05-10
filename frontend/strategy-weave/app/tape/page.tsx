@@ -23,6 +23,7 @@ export default function TapePage() {
   const [notes, setNotes] = useState("");
 
   const load = useCallback(async () => {
+    await Promise.resolve();
     setLoading(true);
     setError(null);
     try {

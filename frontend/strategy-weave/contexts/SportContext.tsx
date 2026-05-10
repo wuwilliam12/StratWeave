@@ -34,13 +34,15 @@ export function SportProvider({ children }: { children: ReactNode }) {
   const [sportId, setSportIdState] = useState<SportId>("boxing");
 
   useLayoutEffect(() => {
-    try {
-      const stored = parseSportId(localStorage.getItem(SPORT_STORAGE_KEY));
-      setSportIdState(stored);
-      applyDocumentSport(stored);
-    } catch {
-      applyDocumentSport("boxing");
-    }
+    queueMicrotask(() => {
+      try {
+        const stored = parseSportId(localStorage.getItem(SPORT_STORAGE_KEY));
+        setSportIdState(stored);
+        applyDocumentSport(stored);
+      } catch {
+        applyDocumentSport("boxing");
+      }
+    });
   }, []);
 
   const setSportId = useCallback((id: SportId) => {
