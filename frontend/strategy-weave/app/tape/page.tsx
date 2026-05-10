@@ -23,7 +23,6 @@ export default function TapePage() {
   const [notes, setNotes] = useState("");
 
   const load = useCallback(async () => {
-    await Promise.resolve();
     setLoading(true);
     setError(null);
     try {
@@ -37,7 +36,9 @@ export default function TapePage() {
   }, []);
 
   useEffect(() => {
-    void load();
+    queueMicrotask(() => {
+      void load();
+    });
   }, [load]);
 
   const onSubmit = async (e: FormEvent) => {

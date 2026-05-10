@@ -23,7 +23,6 @@ export default function HeadgearPage() {
   );
 
   const load = useCallback(async () => {
-    await Promise.resolve();
     setLoading(true);
     setError(null);
     try {
@@ -37,7 +36,9 @@ export default function HeadgearPage() {
   }, []);
 
   useEffect(() => {
-    void load();
+    queueMicrotask(() => {
+      void load();
+    });
   }, [load]);
 
   const onSubmit = async (e: FormEvent) => {
